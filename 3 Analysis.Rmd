@@ -5,6 +5,8 @@ output: html_document
 
 ```{r setup/libraries/read data/rename, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+options(scipen = "999")
+
 
 # libraries
 library(tidyverse)
@@ -13,7 +15,6 @@ library(psych)
 
 
 ```{r open data}
-
 # renaming kann auch weg wenn erstmal complete ####
 industries_rename <- function(adata){
   adata$industry[adata$industry == "Abfallwirtschaft, Energieversorgung, Wasserversorgung"] <- "Waste management, energy supply, water supply"
@@ -63,7 +64,7 @@ archi <- adata_amr %>% dplyr::filter(industry == "Construction, Architecture")
 
 ## Entropy
 ```{r Entropy x population plot}
-options(scipen = "999")
+
 
 pop_entropy <- ggplot(data = adata_each, aes(x = log(bevoelkerung, base = 10), y = entropy)) +
   geom_point(alpha = 0.5) +

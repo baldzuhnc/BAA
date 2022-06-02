@@ -50,12 +50,7 @@ clean <- function(rawdata){
                                                 rawdata$sprachkenntnisse.4,
                                                 sep = ", "),
                         Fuehrerschein = rawdata$mobilitaet.fuehrerscheine.1
-                        ) %>% drop_na(Lon)
-  
-  #cleantibble$Stellenbeschreibung <- cleantibble$Stellenbeschreibung %>%
-  #  str_to_lower() %>%
-  #  str_replace_all("[^[:alnum:] ]", " ") %>%
-  #  str_squish()
+                        ) %>% drop_na(Lon) #dropna
   
   return(cleantibble)
   
@@ -120,10 +115,7 @@ add_popamr <- function(mapped_cleantibble){
 }
 
 
-
 ############## Komplexitätsmaße hinzufügen ##############
-#function takes datatable and returns tibble with complexity measures for each job ad
-
 
 textual_complexity_measures <- function(cleantibble){
   
@@ -196,36 +188,6 @@ textual_complexity_measures <- function(cleantibble){
   
 }
 
-
-
-
-
-########## OLD VERSIONS ###############
-
-#uunötig
-
-group_amr <- function(mapped_cleantibble){
-  
-  #Population einlesen
-  pop_amr <- readxl::read_excel("Shapefiles/11-arbeitsmarktregion.xlsx") %>%
-    slice(7:263)
-  
-  pop_amr <- tibble(SN_AMR = as.integer(pop_amr$`Arbeitsmarktregionen nach Fläche, Bevölkerung und Bevölkerungsdichte`),
-                    AMR = pop_amr$...2,
-                    bevoelkerung = as.integer(pop_amr$...4),
-                    maennlich = as.integer(pop_amr$...5),
-                    weiblich = as.integer(pop_amr$...6),
-                    dichte = as.integer(pop_amr$...7)) %>%
-    select(SN_AMR, AMR, bevoelkerung, maennlich, weiblich, dichte)
-  
-  #Nach AMR gruppieren und mit Populationsdaten verbinden
-  gruppiert_pop <- mapped_cleantibble %>% 
-    group_by(AMR) %>% 
-    summarise(n_anzeigen = n()) %>%
-    inner_join(pop_amr, by = "AMR")
-  
-  return(gruppiert_pop)
-} 
 
 
 ############## Einzeilige Komplexitätsauswertung #############
