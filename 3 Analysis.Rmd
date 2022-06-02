@@ -1,0 +1,315 @@
+---
+title: "3a Analysis"
+output: html_document
+---
+
+```{r setup/libraries/read data/rename, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# libraries
+library(tidyverse)
+library(psych)
+```
+
+
+```{r open data}
+
+# renaming kann auch weg wenn erstmal complete ####
+industries_rename <- function(adata){
+  adata$industry[adata$industry == "Abfallwirtschaft, Energieversorgung, Wasserversorgung"] <- "Waste management, energy supply, water supply"
+  adata$industry[adata$industry == "Banken, Finanzdienstleistungen, Immobilien, Versicherungen"] <- "Banks, financial services, real estate, insurance"
+  adata$industry[adata$industry == "Bau, Architektur"] <- "Construction, architecture"
+  adata$industry[adata$industry == "Bildung, Erziehung, Unterricht"] <- "Education, upbringing, teaching"
+  adata$industry[adata$industry == "Chemie, Pharma, Biotechnologie"] <- "Chemistry, pharmaceuticals, biotechnology"
+  adata$industry[adata$industry == "Einzelhandel, Großhandel, Außenhandel"] <- "Retail, wholesale, foreign Trade"
+  adata$industry[adata$industry == "Elektro, Feinmechanik, Optik, Medizintechnik"] <- "Electrical, precision mechanics, optics, medical technology"
+  adata$industry[adata$industry == "Fahrzeugbau, Fahrzeuginstandhaltung"] <- "Vehicle construction, vehicle maintenance"
+  adata$industry[adata$industry == "Gesundheit, Soziales"] <- "Health, social sector"
+  adata$industry[adata$industry == "Hotel, Gaststätten, Tourismus, Kunst, Kultur, Freizeit"] <- "Hotel, restaurants, tourism, art, culture, leisure"
+  adata$industry[adata$industry == "IT, Computer, Telekommunikation"] <- "IT, computers, telecommunication"
+  adata$industry[adata$industry == "Konsum- und Gebrauchsgüter"] <- "Consumer goods and durables"
+  adata$industry[adata$industry == "Landwirtschaft, Forstwirtschaft, Gartenbau"] <- "Agriculture, forestry, horticulture"
+  adata$industry[adata$industry == "Logistik, Transport, Verkehr"] <- "Logistics, transport, traffic"
+  adata$industry[adata$industry == "Luftfahrttechnik, Raumfahrttechnik"] <- "Aeronautical engineering, space technology"
+  adata$industry[adata$industry == "Management, Beratung, Recht, Steuern"] <- "Management, consulting, law, taxes"
+  adata$industry[adata$industry == "Medien, Informationsdienste"] <- "Media, information services"
+  adata$industry[adata$industry == "Metall, Maschinenbau, Anlagenbau"] <- "Metal, mechanical engineering, plant engineering"
+  adata$industry[adata$industry == "Nahrungs- / Genussmittelherstellung"] <- "Food, luxury food production"
+  adata$industry[adata$industry == "Öffentlicher Dienst, Organisationen"] <- "Public service, organisations"
+  adata$industry[adata$industry == "Papier, Druck, Verpackung"] <- "Paper, printing, packaging"
+  adata$industry[adata$industry == "Rohstoffgewinnung, Rohstoffaufbereitung"] <- "Raw material extraction, raw material processing"
+  adata$industry[adata$industry == "Rohstoffverarbeitung, Glas, Keramik, Kunststoff, Holz"] <- "Raw materials processing, glass, ceramics, plastics, wood"
+  adata$industry[adata$industry == "Sicherheits-, Reinigungs-, Reparatur- und weitere Dienstleistungen"] <- "Security, cleaning, repair and other services"
+  adata$industry[adata$industry == "Werbung, Öffentlichkeitsarbeit"] <- "Advertising, public relations"
+  adata$industry[adata$industry == "Wissenschaft, Forschung, Entwicklung"] <- "Science, research, development"
+  
+  return(adata)
+}
+
+adata_each <- readRDS("Data/1_final_each2022-05-25 18:05:51.rds") %>% 
+  rename(industry = "Branche") %>%
+  industries_rename()
+  
+adata_amr <- readRDS("Data/2_final_2022-05-25 10:41:28.rds") %>%
+  industries_rename()
+
+```
+
+```{r architects}
+archi <- adata_amr %>% dplyr::filter(industry == "Construction, Architecture")
+```
+
+# Macro
+
+## Entropy
+```{r Entropy x population plot}
+options(scipen = "999")
+
+pop_entropy <- ggplot(data = adata_each, aes(x = log(bevoelkerung, base = 10), y = entropy)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm") +
+  ggpubr::stat_cor(method = "pearson", label.x.npc = 0.6, label.y.npc = 0.1)
+pop_entropy
+
+```
+
+
+
+```{r Entropy x AMR plot}
+options(scipen = "999")
+amr_entro <- adata_each %>% 
+  group_by(AMR, bevoelkerung) %>% 
+  summarise(mean_entropy = mean(entropy, na.rm = T)) %>% glimpse()
+
+pop_entropy <- ggplot(data = amr_entro, aes(x = log(bevoelkerung, base = 10), y = mean_entropy)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm") +
+  ggpubr::stat_cor(method = "pearson", label.x.npc = 0.6, label.y.npc = 0.1)
+pop_entropy
+
+
+```
+
+
+
+
+## Other measures
+```{r, Types x population}
+pop_typ <- ggplot(data = adata_each, aes(x = log(bevoelkerung, base = 10), y = types)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm") +
+  ggpubr::stat_cor(method = "pearson")
+
+pop_typ
+```
+
+```{r, pr_noun + population}
+pop_noun <- ggplot(data = adata_each, aes(x = log(bevoelkerung, base = 10), y = sents)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm") +
+  ggpubr::stat_cor(method = "pearson")
+
+pop_noun
+
+```
+
+
+# Inter-industry
+
+## Frequencies
+
+```{r, frequencies per industry}
+#histogram of frequencies, log(population) -> scaling observable for some industries
+
+p <- ggplot(data = adata_each, aes(x = log(bevoelkerung, base = 10))) +
+  geom_histogram(bins = 50) +
+  #geom_smooth() +
+  #geom_jitter() +
+  facet_wrap(vars(industry))
+p
+
+```
+
+
+## Boxplot of entropy
+
+```{r, boxplot per industry}
+box_pl <- ggplot(data = adata_each %>% dplyr::filter(industry %in% c("Agriculture, forestry, horticulture", "IT, computers, telecommunication")), aes(y = entropy)) +
+  geom_boxplot() +
+  facet_wrap(vars(industry))
+box_pl
+
+
+```
+
+
+## Bootstrap 
+```{r bootstrapped CIs entropy differences}
+library(boot)
+
+boots_function <- function(data,index){
+  d <- data[index,]
+  return(mean(d$entropy, na.rm = T))  
+}
+
+boots <- adata_each %>%
+  group_split(industry) %>% 
+  
+  map_dfr(function(x){
+    mean_entropy <- mean(x$entropy, na.rm = T)
+    
+    basic <- boot.ci(boot(x, boots_function, R = 10000), type = "basic")$basic
+    CI.LL <- basic[4]
+    CI.UL <- basic[5]
+    
+    res <- tibble(mean_entropy = round(mean_entropy, digits = 4),
+                  CI.LL = round(CI.LL, digits = 4),
+                  CI.UL = round(CI.UL, digits = 4))
+    
+    return(res)
+    
+    })
+boots
+
+saveRDS(boots, file = "Data/entropy_industry bootstrap_ci_26.05.rds")
+
+```
+
+
+```{r combine boots and plot CIs, fig.height=6, fig.width=10}
+
+boots <- readRDS("Data/entropy_industry bootstrap_ci_26.05.rds")
+
+industry_entropy_df <- adata_each %>% 
+  group_by(industry) %>% 
+  summarise(mean_entropy = round(mean(entropy, na.rm = T), digits = 4))
+
+boots_entropy <- merge(industry_entropy_df, boots)
+
+be <- ggplot(data = boots_entropy) +
+    geom_col(aes(x = reorder(industry, -mean_entropy), y = mean_entropy, fill = industry)) +
+    coord_flip() +
+    #scale_fill_manual(values = c("blue", "black", "deepskyblue1", "yellow2", "chartreuse4", "purple", "red")) +
+    geom_errorbar(aes(x = industry, ymin = CI.LL, ymax = CI.UL), color = "darkred") +
+    labs(x =  "industry", title = "average entropy of job ads \n 95% bootstrap CI after 10000 resampling interations") +
+    theme(legend.position = "none")
+    
+be
+
+```
+
+
+```{r homskedasticity of entropy in industries}
+#Variance of all industries, dataframe
+comp_variance <- adata_amr %>% 
+  group_by(industry) %>%
+  summarise(var_entropy = var(mean_entropy, na.rm = T))
+
+#Rule of thumb for Homoskedasticity: largest variance 1.5x smallest variance
+max(comp_variance$var_entropy)
+1.5 * min(comp_variance$var_entropy)
+```
+
+## Entropy and scaling per industry
+```{r scaling/entropy, echo=FALSE}
+
+# This function takes adata which was grouped by industry beforehand and returns scaling beta for each industry
+scaling <- function(industry_tibble){
+  
+  model1 <- lm(formula = log(n) ~ log(population),
+               data = industry_tibble)
+  
+  return(round(model1$coefficients[2], digits = 3))
+}
+
+#group by industry, calculate summaries e.g. scaling
+industry_data <- adata_amr %>% group_by(industry) %>%
+  summarise(beta = scaling(cur_data()),
+            mean_entropy = mean(mean_entropy, na.rm = T),
+            mean_tok = mean(mean_tok, na.rm = T),
+            mean_types = mean(mean_types, na.rm = T))
+
+entropy_industry <- ggplot(data = industry_data, aes(x = mean_entropy, y = beta)) +
+  geom_point(colour = "darkorange") +
+  ggpubr::stat_cor(method = "pearson") +
+  geom_smooth(method = "lm", colour = "darkred") +
+  ggrepel::geom_text_repel(aes(label = industry)) +
+  labs(x = "Average entropy of job ads", y = "Scaling coefficient (β)") +
+  theme_minimal()
+entropy_industry
+```
+
+
+
+
+# Intra-industry
+
+```{r descriptives}
+
+#Descriptives of all industries
+adata  %>% select(mean_entropy, industry) %>% describe.by(adata$industry)
+
+
+```
+
+```{r intra industry model}
+
+#Architekturbranche
+archi <- adata_each %>% 
+  dplyr::filter(industry == "Vehicle construction, vehicle maintenance") %>% 
+  group_by(AMR) %>% 
+  summarise(mean_entropy = mean(entropy, na.rm = T),
+            population = mean(bevoelkerung))
+
+model2 <- lm(formula = log(mean_entropy) ~ log(population),
+                        data = archi)
+
+summary(model2)
+
+#there seems to be an association
+
+
+```
+
+```{r intra industry facet amr}
+#entropy
+e <- ggplot(data = adata_amr, aes(x = log(population, base = 10), y = log(mean_entropy))) +
+  geom_point(alpha = 0.5) +
+  ggpubr::stat_cor(method = "pearson", label.y.npc = 0.1) +
+  geom_smooth(method = "lm") +
+  facet_wrap(vars(industry))
+e
+
+
+```
+
+```{r intra industry facet pop}
+#entropy
+e <- ggplot(data = adata_each, aes(x = log(bevoelkerung, base = 10), y = log(entropy))) +
+  geom_point(alpha = 0.5) +
+  ggpubr::stat_cor(method = "pearson", label.y.npc = 0.1) +
+  geom_smooth(method = "lm") +
+  facet_wrap(vars(industry))
+e
+
+```
+
+
+# Map
+
+```{r, map of all jobads}
+
+amr_n <- adata_each %>% group_by(AMR) %>% summarise(n_anzeigen = n())
+
+amr_sf <- sf::st_read("Shapefiles/Deutschland/amr250/AMR250.shp") %>%
+  inner_join(amr_n, by = "AMR")
+
+a <- ggplot(data = amr_sf) +
+  geom_sf(aes(fill=n_anzeigen)) +
+  scale_fill_continuous(low = "white", high = "darkred") +
+  labs(fill = "Number of Job Ads") +
+  theme_minimal() 
+a
+
+```
+
