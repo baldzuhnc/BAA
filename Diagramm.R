@@ -12,8 +12,8 @@ digraph {
     D [label = 'Meso \n Inter-industry effect', shape = none]
     G [label = 'Micro \n Intra-industry effect', shape = none]
     
-    B [label = 'Production of \n complex goods']
-    C [label = 'Spatial agglomeration']
+    B [label = 'Complex \n economic activites']
+    C [label = 'Spatial \n agglomeration']
     
     
     E [label = 'Industries which produce \n complex goods']
@@ -30,7 +30,7 @@ digraph {
     B -> C [minlen = 15, style = dashed, dir = both]
     B -> E [style = dashed]
     
-    E -> F [minlen = 10, style = dashed]
+    E -> F [minlen = 10, style = dashed, dir = both]
     E -> H [style = dashed]
     
     H -> I [minlen = 5, style = dashed]
