@@ -265,11 +265,22 @@ by_industry <- adata_each %>%
 by_industry <- by_industry %>%
   mutate(model = map(data, industry_model))
 
-by_country
+models_by_industry <- by_industry %>% 
+  mutate(tidy = map(model, broom::tidy)) %>% 
+  unnest(tidy)
 
 
 ```
 
+
+
+```{r}
+waste <- adata_each %>% dplyr::filter(industry == "Waste management, energy supply, water supply")
+
+model <- lm(log(entropy) ~ log(bevoelkerung), data = waste)
+summary(model)
+
+```
 
 
 ```{r intra industry facet amr}
