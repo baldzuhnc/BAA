@@ -246,6 +246,11 @@ adata  %>% select(mean_entropy, industry) %>% describe.by(adata$industry)
 ## Beta estimates
 Does the beta coefficient increase with population size in the industry sectors?
 
+
+Raw material extraction has the highest beta: 0.004716474483
+A 1% increase in population is associated with a 0.04% increase in textual information density of job ads.
+-> Negative relationships as well, e.g. IT, computers, telecommunication -> weird
+
 ```{r intra industry model}
 industry_model <- function(df) {
   lm(log(entropy) ~ log(bevoelkerung), data = df)
