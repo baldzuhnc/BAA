@@ -1,12 +1,11 @@
 ---
-title: "3a Analysis"
+title: "Analysis"
 output: html_document
 ---
 
 ```{r setup/libraries/read data/rename, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 options(scipen = "999")
-
 
 # libraries
 library(tidyverse)
@@ -57,17 +56,11 @@ adata_amr <- readRDS("Data/2_final_2022-05-25 10:41:28.rds") %>%
 
 ```
 
-```{r architects}
-archi <- adata_amr %>% dplyr::filter(industry == "Construction, Architecture")
-```
-
 # Macro
 
 ## Entropy
 ```{r Entropy x population plot}
-
-
-pop_entropy <- ggplot(data = adata_each, aes(x = log(bevoelkerung, base = 10), y = entropy)) +
+pop_entropy <- ggplot(data = adata_each %>% dplyr::filter(entropy > 0), aes(x = log(bevoelkerung, base = 10), y = log(entropy))) +
   geom_point(alpha = 0.5) +
   geom_smooth(method = "lm") +
   ggpubr::stat_cor(method = "pearson", label.x.npc = 0.6, label.y.npc = 0.1)
@@ -176,7 +169,6 @@ saveRDS(boots, file = "Data/entropy_industry bootstrap_ci_26.05.rds")
 
 
 ```{r combine boots and plot CIs, fig.height=6, fig.width=10}
-
 boots <- readRDS("Data/entropy_industry bootstrap_ci_26.05.rds")
 
 industry_entropy_df <- adata_each %>% 
@@ -251,6 +243,8 @@ adata  %>% select(mean_entropy, industry) %>% describe.by(adata$industry)
 
 ```
 
+## Beta estimates
+Does the beta coefficient increase with population size in the industry sectors?
 
 ```{r intra industry model}
 industry_model <- function(df) {
@@ -258,7 +252,7 @@ industry_model <- function(df) {
 }
 
 by_industry <- adata_each %>% 
-  dplyr::filter(entropy > 0.000) %>% #drop cases where entropy is smaller than 1 -> undefefined if log(0)
+  dplyr::filter(entropy > 0) %>% #drop cases where entropy is smaller than 1 -> undefefined if log(0)
   group_by(industry) %>%
   nest()
 
@@ -267,7 +261,9 @@ by_industry <- by_industry %>%
 
 models_by_industry <- by_industry %>% 
   mutate(tidy = map(model, broom::tidy)) %>% 
-  unnest(tidy)
+  select(-data, -model) %>%
+  unnest(tidy) %>%
+  dplyr::filter(term == "log(bevoelkerung)")
 
 
 ```
@@ -307,7 +303,7 @@ e
 ```
 
 
-# Map
+# Maps
 
 ```{r, map of all jobads}
 
