@@ -15,6 +15,7 @@ library(psych)
 
 
 ```{r open data}
+
 # renaming kann auch weg wenn erstmal complete ####
 industries_rename <- function(adata){
   adata$industry[adata$industry == "Abfallwirtschaft, Energieversorgung, Wasserversorgung"] <- "Waste management, energy supply, water supply"
@@ -75,9 +76,7 @@ pop_entropy
 ```
 
 
-
 ```{r Entropy x AMR plot}
-options(scipen = "999")
 amr_entro <- adata_each %>% 
   group_by(AMR, bevoelkerung) %>% 
   summarise(mean_entropy = mean(entropy, na.rm = T)) %>% glimpse()
@@ -90,7 +89,6 @@ pop_entropy
 
 
 ```
-
 
 
 
@@ -212,6 +210,7 @@ max(comp_variance$var_entropy)
 ```
 
 ## Entropy and scaling per industry
+
 ```{r scaling/entropy, echo=FALSE}
 
 # This function takes adata which was grouped by industry beforehand and returns scaling beta for each industry
@@ -242,7 +241,6 @@ entropy_industry
 
 
 
-
 # Intra-industry
 
 ```{r descriptives}
@@ -253,24 +251,26 @@ adata  %>% select(mean_entropy, industry) %>% describe.by(adata$industry)
 
 ```
 
+
 ```{r intra industry model}
+industry_model <- function(df) {
+  lm(log(entropy) ~ log(bevoelkerung), data = df)
+}
 
-#Architekturbranche
-archi <- adata_each %>% 
-  dplyr::filter(industry == "Vehicle construction, vehicle maintenance") %>% 
-  group_by(AMR) %>% 
-  summarise(mean_entropy = mean(entropy, na.rm = T),
-            population = mean(bevoelkerung))
+by_industry <- adata_each %>% 
+  dplyr::filter(entropy > 0.000) %>% #drop cases where entropy is smaller than 1 -> undefefined if log(0)
+  group_by(industry) %>%
+  nest()
 
-model2 <- lm(formula = log(mean_entropy) ~ log(population),
-                        data = archi)
+by_industry <- by_industry %>%
+  mutate(model = map(data, industry_model))
 
-summary(model2)
-
-#there seems to be an association
+by_country
 
 
 ```
+
+
 
 ```{r intra industry facet amr}
 #entropy
@@ -309,6 +309,26 @@ a <- ggplot(data = amr_sf) +
   geom_sf(aes(fill=n_anzeigen)) +
   scale_fill_continuous(low = "white", high = "darkred") +
   labs(fill = "Number of Job Ads") +
+  theme_minimal() 
+a
+
+```
+
+
+
+```{r, map of knowledge complexity x AMR}
+
+amr_entro <- adata_each %>% 
+  group_by(AMR, bevoelkerung) %>% 
+  summarise(mean_entropy = mean(entropy, na.rm = T))
+
+amr_sf <- sf::st_read("Shapefiles/Deutschland/amr250/AMR250.shp") %>%
+  inner_join(amr_entro, by = "AMR")
+
+a <- ggplot(data = amr_sf) +
+  geom_sf(aes(fill=mean_entropy)) +
+  scale_fill_continuous(low = "white", high = "darkred") +
+  labs(fill = "Knowledge complexity") +
   theme_minimal() 
 a
 

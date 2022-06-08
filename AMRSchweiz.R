@@ -14,6 +14,8 @@ d <- readr::read_file("Shapefiles/Schweiz/669_SMM_Data_stellenportale_v6.0.0.txt
     separate_rows(value, sep = "320+\\d{10,11}")  
     #separate("value", into = paste0("X", 1:max_columns) , sep = "\n") 
 
+
+
 ####### AMR
 rawdata <- df_list <- list.files(path = "/home/sc.uni-leipzig.de/cu780nfaa/rstudio01/BAA/Data/Rawdata/", pattern = "*.rds*", full.names = T) %>% 
   map_df(function(x){
