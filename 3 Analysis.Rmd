@@ -14,39 +14,6 @@ library(psych)
 
 
 ```{r open data}
-
-# renaming kann auch weg wenn erstmal complete ####
-industries_rename <- function(adata){
-  adata$industry[adata$industry == "Abfallwirtschaft, Energieversorgung, Wasserversorgung"] <- "Waste management, energy supply, water supply"
-  adata$industry[adata$industry == "Banken, Finanzdienstleistungen, Immobilien, Versicherungen"] <- "Banks, financial services, real estate, insurance"
-  adata$industry[adata$industry == "Bau, Architektur"] <- "Construction, architecture"
-  adata$industry[adata$industry == "Bildung, Erziehung, Unterricht"] <- "Education, upbringing, teaching"
-  adata$industry[adata$industry == "Chemie, Pharma, Biotechnologie"] <- "Chemistry, pharmaceuticals, biotechnology"
-  adata$industry[adata$industry == "Einzelhandel, Großhandel, Außenhandel"] <- "Retail, wholesale, foreign Trade"
-  adata$industry[adata$industry == "Elektro, Feinmechanik, Optik, Medizintechnik"] <- "Electrical, precision mechanics, optics, medical technology"
-  adata$industry[adata$industry == "Fahrzeugbau, Fahrzeuginstandhaltung"] <- "Vehicle construction, vehicle maintenance"
-  adata$industry[adata$industry == "Gesundheit, Soziales"] <- "Health, social sector"
-  adata$industry[adata$industry == "Hotel, Gaststätten, Tourismus, Kunst, Kultur, Freizeit"] <- "Hotel, restaurants, tourism, art, culture, leisure"
-  adata$industry[adata$industry == "IT, Computer, Telekommunikation"] <- "IT, computers, telecommunication"
-  adata$industry[adata$industry == "Konsum- und Gebrauchsgüter"] <- "Consumer goods and durables"
-  adata$industry[adata$industry == "Landwirtschaft, Forstwirtschaft, Gartenbau"] <- "Agriculture, forestry, horticulture"
-  adata$industry[adata$industry == "Logistik, Transport, Verkehr"] <- "Logistics, transport, traffic"
-  adata$industry[adata$industry == "Luftfahrttechnik, Raumfahrttechnik"] <- "Aeronautical engineering, space technology"
-  adata$industry[adata$industry == "Management, Beratung, Recht, Steuern"] <- "Management, consulting, law, taxes"
-  adata$industry[adata$industry == "Medien, Informationsdienste"] <- "Media, information services"
-  adata$industry[adata$industry == "Metall, Maschinenbau, Anlagenbau"] <- "Metal, mechanical engineering, plant engineering"
-  adata$industry[adata$industry == "Nahrungs- / Genussmittelherstellung"] <- "Food, luxury food production"
-  adata$industry[adata$industry == "Öffentlicher Dienst, Organisationen"] <- "Public service, organisations"
-  adata$industry[adata$industry == "Papier, Druck, Verpackung"] <- "Paper, printing, packaging"
-  adata$industry[adata$industry == "Rohstoffgewinnung, Rohstoffaufbereitung"] <- "Raw material extraction, raw material processing"
-  adata$industry[adata$industry == "Rohstoffverarbeitung, Glas, Keramik, Kunststoff, Holz"] <- "Raw materials processing, glass, ceramics, plastics, wood"
-  adata$industry[adata$industry == "Sicherheits-, Reinigungs-, Reparatur- und weitere Dienstleistungen"] <- "Security, cleaning, repair and other services"
-  adata$industry[adata$industry == "Werbung, Öffentlichkeitsarbeit"] <- "Advertising, public relations"
-  adata$industry[adata$industry == "Wissenschaft, Forschung, Entwicklung"] <- "Science, research, development"
-  
-  return(adata)
-}
-
 adata_each <- readRDS("Data/1_final_each2022-05-25 18:05:51.rds") %>% 
   rename(industry = "Branche") %>%
   industries_rename()

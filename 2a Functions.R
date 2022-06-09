@@ -8,7 +8,6 @@ library(spacyr)
 library(quanteda)
 library(quanteda.textstats)
 
-
 #Spacy initialization
 spacy_initialize(model = "de_core_news_sm")
 
@@ -56,6 +55,41 @@ clean <- function(rawdata){
   
 } 
 
+############## Industry classification ##############
+
+classify_industry <- function(cleantibble){
+  
+  baa_key <- readxl::read_excel("Data/ISCO/Alphabetisches-Verzeichnis-Berufsbenennungen.xlsx", sheet = 2) %>%
+    slice(5:18723) %>%
+    rename(Beruf = '...1', baa_key = 'Klassifikation der Berufe 2010 – überarbeitete Fassung 2020')
+  
+  isco_baa <- readxl::read_excel("Data/ISCO/Umsteigeschluessel-KLDB2020-ISCO08.xlsx", sheet = 2) %>%
+    rename("baa_key" = '...1',
+           "baa_bezeichnung" = '...2',
+           "baa_bezeichnung_eng" = '...3',
+           "isco_key" = '...4',
+           "isco_bezeichnung" = '...5',
+           "unit_group_eng" = '...6') %>%
+    slice(5:1530) %>%
+    select(baa_key, baa_bezeichnung, baa_bezeichnung_eng, isco_key, unit_group_eng)
+  
+  
+  creative_industries <- c("211", "226", "212", "251", "252", "214", "215", "216", "221", 
+                           "213", "225", "221", "225", "226", "231", "232", "234", "235", 
+                           "263", "335", "1", "223", "241", "242", "243", "333", "261", "31",
+                           "35", "32", "226", "223", "331", "332", "333", "334", "341", 
+                           "264", "265", "3431", "343", "342")
+  
+  cleantibble_key <- merge(cleantibble, baa_key, by = "Beruf", all.x = T)
+  
+  cleantibble_key_isco <- left_join(cleantibble_key, isco_baa, by = "baa_key") %>%
+    mutate(creative = map_int(isco_key, ~any(str_starts(., creative_industries))))
+  
+  
+  return(cleantibble_key_isco)
+}
+
+
 ############## Ordnet jeder Anzeige die Arbeitsmarktregion (AMR) zu, in die sie fällt ##############
 
 mapamr <- function(cleantibble){
@@ -89,6 +123,7 @@ mapamr <- function(cleantibble){
   
   return(ergebnis)
 } 
+
 
 ############## Populationsdaten hinzufügen ##############
 
@@ -188,7 +223,43 @@ textual_complexity_measures <- function(cleantibble){
   
 }
 
+############## en ingles ##############
 
+en_ingles <- function(adata){
+  
+  #variables
+  adata <- adata %>% rename(industry = "Branche")
+  
+  #industries
+  adata$industry[adata$industry == "Abfallwirtschaft, Energieversorgung, Wasserversorgung"] <- "Waste management, energy supply, water supply"
+  adata$industry[adata$industry == "Banken, Finanzdienstleistungen, Immobilien, Versicherungen"] <- "Banks, financial services, real estate, insurance"
+  adata$industry[adata$industry == "Bau, Architektur"] <- "Construction, architecture"
+  adata$industry[adata$industry == "Bildung, Erziehung, Unterricht"] <- "Education, upbringing, teaching"
+  adata$industry[adata$industry == "Chemie, Pharma, Biotechnologie"] <- "Chemistry, pharmaceuticals, biotechnology"
+  adata$industry[adata$industry == "Einzelhandel, Großhandel, Außenhandel"] <- "Retail, wholesale, foreign Trade"
+  adata$industry[adata$industry == "Elektro, Feinmechanik, Optik, Medizintechnik"] <- "Electrical, precision mechanics, optics, medical technology"
+  adata$industry[adata$industry == "Fahrzeugbau, Fahrzeuginstandhaltung"] <- "Vehicle construction, vehicle maintenance"
+  adata$industry[adata$industry == "Gesundheit, Soziales"] <- "Health, social sector"
+  adata$industry[adata$industry == "Hotel, Gaststätten, Tourismus, Kunst, Kultur, Freizeit"] <- "Hotel, restaurants, tourism, art, culture, leisure"
+  adata$industry[adata$industry == "IT, Computer, Telekommunikation"] <- "IT, computers, telecommunication"
+  adata$industry[adata$industry == "Konsum- und Gebrauchsgüter"] <- "Consumer goods and durables"
+  adata$industry[adata$industry == "Landwirtschaft, Forstwirtschaft, Gartenbau"] <- "Agriculture, forestry, horticulture"
+  adata$industry[adata$industry == "Logistik, Transport, Verkehr"] <- "Logistics, transport, traffic"
+  adata$industry[adata$industry == "Luftfahrttechnik, Raumfahrttechnik"] <- "Aeronautical engineering, space technology"
+  adata$industry[adata$industry == "Management, Beratung, Recht, Steuern"] <- "Management, consulting, law, taxes"
+  adata$industry[adata$industry == "Medien, Informationsdienste"] <- "Media, information services"
+  adata$industry[adata$industry == "Metall, Maschinenbau, Anlagenbau"] <- "Metal, mechanical engineering, plant engineering"
+  adata$industry[adata$industry == "Nahrungs- / Genussmittelherstellung"] <- "Food, luxury food production"
+  adata$industry[adata$industry == "Öffentlicher Dienst, Organisationen"] <- "Public service, organisations"
+  adata$industry[adata$industry == "Papier, Druck, Verpackung"] <- "Paper, printing, packaging"
+  adata$industry[adata$industry == "Rohstoffgewinnung, Rohstoffaufbereitung"] <- "Raw material extraction, raw material processing"
+  adata$industry[adata$industry == "Rohstoffverarbeitung, Glas, Keramik, Kunststoff, Holz"] <- "Raw materials processing, glass, ceramics, plastics, wood"
+  adata$industry[adata$industry == "Sicherheits-, Reinigungs-, Reparatur- und weitere Dienstleistungen"] <- "Security, cleaning, repair and other services"
+  adata$industry[adata$industry == "Werbung, Öffentlichkeitsarbeit"] <- "Advertising, public relations"
+  adata$industry[adata$industry == "Wissenschaft, Forschung, Entwicklung"] <- "Science, research, development"
+  
+  return(adata)
+}
 
 ############## Einzeilige Komplexitätsauswertung #############
 
@@ -211,6 +282,7 @@ complex_beta <- function(mapped_cleantibble,
                         )
   
 } 
+
 
 
 ############## Sandbox ##############
