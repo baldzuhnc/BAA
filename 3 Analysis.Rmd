@@ -15,11 +15,10 @@ library(psych)
 
 ```{r open data}
 adata_each <- readRDS("Data/1_final_each2022-05-25 18:05:51.rds") %>% 
-  rename(industry = "Branche") %>%
-  industries_rename()
-  
+  en_ingles()
+
 adata_amr <- readRDS("Data/2_final_2022-05-25 10:41:28.rds") %>%
-  industries_rename()
+  en_ingles()
 
 ```
 
