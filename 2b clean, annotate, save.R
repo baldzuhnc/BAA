@@ -18,18 +18,17 @@ map(df_list, function(x){
     classify_industry() %>%
     mapamr() %>%
     add_popamr() %>%
-    textual_complexity_measures() #%>%
-    #en_ingles()
+    textual_complexity_measures()
   
   #ergebnis df pro branche in finaldata abspeichern
   branche <- str_replace_all(branche, "/ ", "")
-  saveRDS(df, file = paste0("/home/sc.uni-leipzig.de/cu780nfaa/rstudio01/BAA/Data/1d_1_withduplicates/", branche, ".rds"))
+  saveRDS(df, file = paste0("/home/sc.uni-leipzig.de/cu780nfaa/rstudio01/BAA/Data/3_1_plus_occupations/", branche, ".rds"))
   
 })
 
 
 ############## One dataframe ##############
-df <- list.files(path = "/home/sc.uni-leipzig.de/cu780nfaa/rstudio01/BAA/Data/1d_1_withduplicates/", 
+df <- list.files(path = "/home/sc.uni-leipzig.de/cu780nfaa/rstudio01/BAA/Data/3_1_plus_occupations/", 
                     pattern = "*.rds*", 
                     full.names = T) %>% 
   
@@ -40,7 +39,7 @@ df <- list.files(path = "/home/sc.uni-leipzig.de/cu780nfaa/rstudio01/BAA/Data/1d
   })
 
 
-saveRDS(df, file = paste0("Data/", "final_each_categorized_", Sys.time() ,".rds"))
+saveRDS(df, file = paste0("Data/", "final_occupations_", Sys.time() ,".rds"))
 
 
 
