@@ -89,12 +89,12 @@ classify_industry <- function(cleantibble){
                                         str_starts(isco_key, "3") ~ "Technicians and Associate Professionals",
                                         str_starts(isco_key, "4") ~ "Clerical Support Workers",
                                         str_starts(isco_key, "5") ~ "Services and Sales Workers",
-                                        str_starts(isco_key, "6") ~ "Skilled Agricultural, Forestry and Fishery Workers",
+                                        str_starts(isco_key, "6") ~ "Skilled Agricultural,\n Forestry and Fishery Workers",
                                         str_starts(isco_key, "7") ~ "Craft and Related Trades Workers",
-                                        str_starts(isco_key, "8") ~ "Plant and Machine Operators And Assemblers",
+                                        str_starts(isco_key, "8") ~ "Plant and Machine Operators,\n Assemblers",
                                         str_starts(isco_key, "9") ~ "Elementary Occupations",
                                         str_starts(isco_key, "0") ~ "Armed Forces Occupations"),
-           occupation_submajor = case_when(str_starts(isco_key, "11") ~ "Chief Executives, Senior Officials and Legislators",
+           occupation_submajor = case_when(str_starts(isco_key, "11") ~ "Chief Executives, Senior Officials\n and Legislators",
                                            str_starts(isco_key, "12") ~ "Administrative and Commercial Managers",
                                            str_starts(isco_key, "13") ~ "Production and Specialized Services Managers",
                                            str_starts(isco_key, "14") ~ "Hospitality, Retail and Other Services Managers",
@@ -297,7 +297,7 @@ en_ingles <- function(adata){
   adata$industry[adata$industry == "Konsum- und Gebrauchsgüter"] <- "Consumer goods and durables"
   adata$industry[adata$industry == "Landwirtschaft, Forstwirtschaft, Gartenbau"] <- "Agriculture, forestry, horticulture"
   adata$industry[adata$industry == "Logistik, Transport, Verkehr "] <- "Logistics, transport, traffic"
-  adata$industry[adata$industry == "Luftfahrttechnik, Raumfahrttechnik"] <- "Aeronautical engineering, space technology"
+  adata$industry[adata$industry == "Luftfahrttechnik, Raumfahrttechnik"] <- "Aeronautical engineering,\n space technology"
   adata$industry[adata$industry == "Management, Beratung, Recht, Steuern"] <- "Management, consulting, law, taxes"
   adata$industry[adata$industry == "Medien, Informationsdienste"] <- "Media, information services"
   adata$industry[adata$industry == "Metall, Maschinenbau, Anlagenbau"] <- "Metal, mechanical engineering, \nplant engineering"
@@ -308,7 +308,7 @@ en_ingles <- function(adata){
   adata$industry[adata$industry == "Rohstoffverarbeitung, Glas, Keramik, Kunststoff, Holz"] <- "Raw materials processing, glass,\n ceramics, plastics, wood"
   adata$industry[adata$industry == "Sicherheits-, Reinigungs-, Reparatur- und weitere Dienstleistungen"] <- "Security, cleaning,\n repair and other services"
   adata$industry[adata$industry == "Werbung, Öffentlichkeitsarbeit"] <- "Advertising, public relations"
-  adata$industry[adata$industry == "Wissenschaft, Forschung, Entwicklung"] <- "Science, research, development"
+  adata$industry[adata$industry == "Wissenschaft, Forschung, Entwicklung"] <- "Science, research,\ development"
   
   return(adata)
 }
