@@ -7,7 +7,7 @@ output:
 
 ```{r setup/libraries, include=FALSE}
 #setup
-knitr::opts_chunk$set(echo = FALSE) #echo enables
+knitr::opts_chunk$set(echo = FALSE, message = F) #echo enables
 source(file = "2a Functions.R") #import functions
 
 # libraries
@@ -86,6 +86,17 @@ pop_entropy
 
 
 ```
+
+```{r, Entropy x AMR beta}
+
+model1 <- lm(log(mean_entropy) ~ log(bevoelkerung), data = amr_entro)
+summary(model1)
+
+
+# beta = 0.006, super significant, 10% increase in population 0.06 % more information
+```
+
+
 
 ```{r Entropy x population plot, echo = FALSE}
 library(scales)
@@ -304,11 +315,11 @@ models_by_industry <- by_industry %>%
   select(-data, -model) %>%
   unnest(tidy) %>%
   dplyr::filter(term == "log(bevoelkerung)") %>%
-  select(-term) %>%
+  select(-term, -statistic) %>%
   arrange(estimate)
 
 models_by_industry
-#xtable::xtable(models_by_industry)
+xtable::xtable(models_by_industry, digits = c(0, 0, 4, 4, 2))
 
 
 ```
