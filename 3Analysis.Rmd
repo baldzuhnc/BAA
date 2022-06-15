@@ -13,23 +13,58 @@ source(file = "2a Functions.R") #import functions
 # libraries
 library(tidyverse)
 library(scales)
-#library(psych)
 
 ```
 
 # Open files
 ```{r open data, include=FALSE}
 adata_each <- readRDS("Data/final_each2022-06-03 02:34:19.rds") %>% 
-  dplyr::filter(AnzahloffeneStellen == 1) %>% #nur anzeigen, die eine stelle betreffen
+  #consider only job ads for exactly one position 
+  dplyr::filter(AnzahloffeneStellen == 1) %>% 
+  # english
   en_ingles()
 
 adata_occ <- readRDS("Data/final_occupations_2022-06-11 22:45:53.rds") %>%
-  dplyr::filter(AnzahloffeneStellen == 1) %>% #nur anzeigen, die eine stelle betreffen
+  #consider only job ads for exactly one position
+  dplyr::filter(AnzahloffeneStellen == 1) %>% 
+  # exclude cases where ID = next(ID) AND creative = next(creative) -> 2631 cases where baa description doesn't overlap with isco classification so that jobs are sorted in two categories: creative and non-creative
+  dplyr::filter(!(ID == lead(ID) & creative == lead(creative))) %>%
+  # exclude these 2631 cases as well
+  dplyr::filter(!(ID == lead(ID) | lag(ID) == ID))
   en_ingles()
+
 
 adata_amr <- readRDS("Data/final_amr_2022-05-25 10:41:28.rds")
 
 ```
+
+
+# Sandbox ################
+
+```{r}
+# exclude cases where ID = next(ID) AND creative = next(creative) -> excludes duplicates
+# 2631 cases where baa description doesn't overlap with isco classification so that jobs are sorted in two categories: creative and non-creative
+
+adata_occ_pruned <- adata_occ %>%
+  dplyr::filter(!(ID == lead(ID) & creative == lead(creative)))
+
+
+sample_occ <- adata_occ_pruned %>%
+  slice(1:100) %>%
+  select(ID, Titel, Beruf, baa_key, isco_key, creative) %>%
+  glimpse()
+
+
+pruned <- adata_occ_pruned %>% select(-baa_key,-baa_bezeichnung, -baa_bezeichnung_eng, -creative, -occupation_major, -occupation_submajor, -isco_key, -unit_group_eng)
+
+each <- adata_each 
+
+test <- distinct(pruned)
+
+```
+
+
+# Sandbox ################
 
 
 # 1 Macro
@@ -152,8 +187,10 @@ pop_noun
 
 ## 2.1 Complexity scaling per industry
 
+All amr_each
 ```{r scaling/entropy, fig.height=6, fig.width=10, echo = FALSE}
 options(ggrepel.max.overlaps = Inf)
+
 # This function takes adata which was grouped by industry beforehand and returns scaling beta for each industry
 scaling <- function(industry_tibble){
   
@@ -193,6 +230,54 @@ entropy_industry
 
 
 ```
+
+All adata_occ
+```{r scaling/entropy, fig.height=6, fig.width=10, echo = FALSE}
+options(ggrepel.max.overlaps = Inf)
+
+# This function takes adata which was grouped by industry beforehand and returns scaling beta for each industry
+scaling <- function(industry_tibble){
+  
+  model1 <- lm(formula = log(n) ~ log(population),
+               data = industry_tibble)
+  
+  return(round(model1$coefficients[2], digits = 3))
+}
+
+#group by industry, calculate summaries e.g. scaling
+
+adata_amr <- adata_occ %>% 
+  group_by(AMR, industry) %>% 
+  summarise(n = n(), 
+            population = mean(bevoelkerung),
+            mean_entropy = mean(entropy, na.rm = T))
+
+industry_data <- adata_amr %>% group_by(industry) %>%
+  summarise(beta = scaling(cur_data()),
+            mean_entropy = mean(mean_entropy, na.rm = T))
+
+#plot, all
+entropy_industry <- ggplot(data = industry_data, aes(x = mean_entropy, y = beta)) +
+  geom_point(colour = "darkorange") +
+  ggpubr::stat_cor(method = "pearson") +
+  geom_smooth(method = "lm", colour = "darkred") +
+  ggrepel::geom_text_repel(aes(label = industry), ) +
+  geom_hline(yintercept = 1, size = 0.2, linetype = "dotted") +
+  labs(x = "Mean Entropy", y = "Scaling coefficient (beta)") +
+  theme_minimal()
+
+entropy_industry
+
+
+
+# taking out non-creative occupations
+
+
+```
+
+
+
+
 
 
 ## 2.2 Differences bootstrap 
