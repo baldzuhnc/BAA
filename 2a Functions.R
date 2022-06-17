@@ -300,7 +300,7 @@ en_ingles <- function(adata){
   adata$industry[adata$industry == "Luftfahrttechnik, Raumfahrttechnik"] <- "Aeronautical engineering,\n space technology"
   adata$industry[adata$industry == "Management, Beratung, Recht, Steuern"] <- "Management, consulting, law, taxes"
   adata$industry[adata$industry == "Medien, Informationsdienste"] <- "Media, information services"
-  adata$industry[adata$industry == "Metall, Maschinenbau, Anlagenbau"] <- "Metal, mechanical engineering, \nplant engineering"
+  adata$industry[adata$industry == "Metall, Maschinenbau, Anlagenbau"] <- "Metal, mechanical engineering,\n plant engineering"
   adata$industry[adata$industry == "Nahrungs- / Genussmittelherstellung"] <- "Food, luxury food production"
   adata$industry[adata$industry == "Öffentlicher Dienst, Organisationen"] <- "Public service, organisations"
   adata$industry[adata$industry == "Papier, Druck, Verpackung"] <- "Paper, printing, packaging"
@@ -308,7 +308,7 @@ en_ingles <- function(adata){
   adata$industry[adata$industry == "Rohstoffverarbeitung, Glas, Keramik, Kunststoff, Holz"] <- "Raw materials processing, glass,\n ceramics, plastics, wood"
   adata$industry[adata$industry == "Sicherheits-, Reinigungs-, Reparatur- und weitere Dienstleistungen"] <- "Security, cleaning,\n repair and other services"
   adata$industry[adata$industry == "Werbung, Öffentlichkeitsarbeit"] <- "Advertising, public relations"
-  adata$industry[adata$industry == "Wissenschaft, Forschung, Entwicklung"] <- "Science, research,\ development"
+  adata$industry[adata$industry == "Wissenschaft, Forschung, Entwicklung"] <- "Science, research,\n development"
   
   return(adata)
 }

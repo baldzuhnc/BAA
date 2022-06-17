@@ -179,7 +179,7 @@ pop_noun
 
 # 2 Inter-industry
 
-## 2.1 Complexity scaling per industry
+## 2.1 Complexity X scaling
 
 ```{r scaling/entropy, fig.height=8, fig.width=8, echo = FALSE}
 options(ggrepel.max.overlaps = Inf)
@@ -717,6 +717,7 @@ be
 
 # 5 Maps
 
+## 5.1 All Ads
 ```{r, map of all jobads, echo = FALSE}
 
 amr_n <- adata_occ %>% group_by(AMR) %>% summarise(n_anzeigen = n())
@@ -725,17 +726,17 @@ amr_sf <- sf::st_read("Shapefiles/Deutschland/amr250/AMR250.shp") %>%
   inner_join(amr_n, by = "AMR")
 
 a <- ggplot(data = amr_sf) +
-  geom_sf(aes(fill=n_anzeigen)) +
+  geom_sf(aes(fill=log(n_anzeigen, base = 10))) +
   coord_sf(datum = NA) +
   scale_fill_continuous(low = "white", high = "darkred") +
-  labs(fill = "Number of Job Ads") +
+  labs(fill = "Number of Job Ads, log base 10") +
   theme_minimal() 
 a
 
 ```
 
 
-
+## 5.2 Knowledge complexity
 ```{r, map of knowledge complexity x AMR, echo = FALSE}
 
 amr_entro <- adata_occ %>% 
