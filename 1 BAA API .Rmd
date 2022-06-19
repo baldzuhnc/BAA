@@ -7,29 +7,25 @@ output: html_document
 
 # Setup
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+```{r packages and setup, include = FALSE}
+#Markdown
+knitr::opts_chunk$set(echo = FALSE, message = FALSE)
 
-```
-
-```{r packages, include = FALSE}
+#libraries
 library(tidyverse)
 library(httr)
 library(jsonlite)
 library(progressr)
-```
 
-```{r handlers, include = FALSE}
-
+#Progressr handlers
 handlers(global = TRUE)
 handlers("rstudio")
-
 ```
 
 # Functions
 
 ### get_token()
-- function returns access token for Jobsuche API
+- function returns access token for the Jobsuche API
 
 ```{r get_token, include = FALSE}
 
@@ -64,7 +60,6 @@ get_token <- function(){
 - function returns a list of reference numbers to the jobs that were found
 
 ```{r get_refnrs, include = FALSE}
-
 get_refnrs <- function(was = NULL,
                       wo = NULL,
                       branche = NULL,
@@ -214,28 +209,28 @@ get_jobdetails <- function(refnr_list, sleep = NULL){
 ```
 
 
-- Leerzeichen wird %20 (Deutsche%20Bahn), Problem: Kann pro request nur 100 results
-- Was: String
-- Wo: String
-- Branche: String Nummer, 1-
-- Beufsfeld: Freitext
-- Page: Vector, z.B. 1:20 -> jeweils size ergebnisse, limitiert auf 100, darf nicht leer sein!
-- Size: String, Ergebnisse pro Seite, kann nicht größer als 100
-- Veroeffentlichtseit: String Anzahl der Tage, seit der Job veröffentlicht wurde. Kann zwischen 0 und 100 Tagen liegen
-- Zeitarbeit: String Gibt an, ob Jobs von Zeitarbeitsfirmen in die Suchergebnisse einbezogen werden sollen (default true)
-- Angebotsart:String 1=ARBEIT; 2=SELBSTAENDIGKEIT, 4=AUSBILDUNG/Duales Studium, 34=Praktikum/Trainee
-- Angebotsart:String 1 = befristet; 2 = unbefristet
-- Arbeitszeit:String Semikolon separirte mehrere Werte möglich (z.B. arbeitszeit=vz;tz) vz=VOLLZEIT, tz=TEILZEIT, snw=SCHICHT_NACHTARBEIT_WOCHENENDE, ho=HEIM_TELEARBEIT, mj=MINIJOB
-- Behinderung:String boolean, kp was default ist
-- Corona: String Wenn true , werden nur Jobs die im Kontext von Corona angeboten werden angezeigt
-- Umkreis:String in kilometern
-- Sleep: Integer, schläft sleep Sekunden nach Anfrage von Size x
+- Space becomes %20 (Deutsche%20Bahn)
+- Was/What: String
+- Wo/Where: String
+- Branche/Industry: String, value between 1 and 26
+- Beufsfeld/Field: String
+- Page: Vector, e.g. c(1:20); Pagination, can't be empty, limited to 100
+- Size: String; Results per page, can't exceed 100
+- Veroeffentlichtseit/PublishedSince: String; Days since the Job ads has been published, value between 0 and 100
+- Zeitarbeit/TemporaryWork: String, boolean T/F; Indicates whether results should include temporary work offers (default True)
+- Angebotsart/Type: String; 1 = ARBEIT; 2 = SELBSTAENDIGKEIT, 4 = AUSBILDUNG/Duales Studium, 34 = Praktikum/Trainee
+- Befristung/Limitation: String; 1 = befristet; 2 = unbefristet
+- Arbeitszeit/Working time: String; Semikolon separirte mehrere Werte möglich (z.B. arbeitszeit=vz;tz) vz=VOLLZEIT, tz=TEILZEIT, snw=SCHICHT_NACHTARBEIT_WOCHENENDE, ho=HEIM_TELEARBEIT, mj=MINIJOB
+- Behinderung/Disability: String boolean, kp was default ist
+- Corona: String, boolean T/F; If True, only offers in relation to the pandemic are returned
+- Umkreis/Perimeter: String; kilometers
+- Sleep: Integer; sleep s seconds after query of size x
 
 
 ```{r get results, echo=TRUE, message=TRUE}
 query <- get_refnrs(was = NULL,
                     wo = NULL,
-                    branche = "18",
+                    branche = "24",
                     berufsfeld = NULL,
                     page = c(1:100), 
                     size = "100", 

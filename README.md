@@ -1,2 +1,5 @@
-# BAA
-R scripts and Rmd notebooks to analyze job advertisements obtained from the german federal employment agency
+# Scaling and job complexity on the german labour market
+Code to gather and analyse job advertisements from the german federal employment agency (Bundesagentur für Arbeit, BAA).
+
+
+
