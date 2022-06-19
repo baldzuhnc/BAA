@@ -16,6 +16,12 @@ library(scales)
 
 ```
 
+```{r}
+
+t <- adata_amr %>% group_by(AMR) %>% summarise(n = n())
+```
+
+
 # Open files
 ```{r open data, include=FALSE}
 adata_each <- readRDS("Data/final_each2022-06-03 02:34:19.rds") %>% 
