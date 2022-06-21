@@ -7,18 +7,13 @@ output:
 
 ```{r setup/libraries, include=FALSE}
 #setup
-knitr::opts_chunk$set(echo = FALSE, message = F) #echo enables
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE) #echo enables
 source(file = "2a Functions.R") #import functions
 
 # libraries
 library(tidyverse)
 library(scales)
 
-```
-
-```{r}
-
-t <- adata_amr %>% group_by(AMR) %>% summarise(n = n())
 ```
 
 
@@ -49,8 +44,15 @@ adata_amr <- readRDS("Data/final_amr_2022-05-25 10:41:28.rds")
 
 # Sandbox ################
 
-```{r}
-t <- adata_each %>% group_by(AMR) %>% summarise(mean_entropy = mean(entropy, na.rm = T))
+```{r, include = FALSE}
+gummibaerchen <- adata_each %>% dplyr::filter(200 > str_length(Stellenbeschreibung)) %>% slice(371:371)
+gummibaerchen
+```
+
+```{r, include = FALSE}
+t <- adata_each %>% dplyr::filter(50 > str_length(Stellenbeschreibung)) %>% dplyr::filter(entropy > 7)
+
+t$Stellenbeschreibung
 
 ```
 
@@ -62,6 +64,7 @@ t <- adata_each %>% group_by(AMR) %>% summarise(mean_entropy = mean(entropy, na.
 
 ## 1.1 Descriptives
 
+#### 1.1.1 Frequencies x population x industry
 ```{r, frequencies per industry, echo = FALSE, fig.height=6, fig.width=10}
 #histogram of frequencies, log(population) -> scaling observable for some industries
 
@@ -73,27 +76,59 @@ p
 ```
 
 
+#### 1.1.2 Totals x industry
 
-## 1.2 Entropy
-
-### 1.2.1 Density distribution
-```{r, density distribution, echo = FALSE}
-amrs <- c("Salzwedel", "Berlin", "Schwäbisch Hall")
-
-p <- ggplot(data = adata_occ %>%
-              dplyr::filter(AMR %in% amrs)) +
-  geom_density(aes(x = entropy, group = AMR, fill = AMR), alpha = 0.5) +
-  theme_minimal()
-  
-p
+```{r, table totals industry}
+industry_totals <- adata_occ %>% 
+                            group_by(industry) %>%
+                            summarise(n = n())
+knitr::kable(industry_totals)
 
 ```
 
 
-### 1.2.2 Entropy X AMR
-```{r Entropy x AMR plot, fig.height=8, fig.width=8}
-#beta = 0.00601668639832804, scales overproportionally, super small again -> how to interpret?
+```{r, plot totals industry, fig.height=6, fig.width=10}
 
+p <- ggplot(data = adata_occ %>% 
+                            group_by(industry) %>%
+                            summarise(n = n())) +
+  geom_col(aes(x = industry, y = n)) +
+  coord_flip()
+
+p
+
+
+```
+
+### 1.1.3 Totals x Occupations
+
+```{r, table totals occupations}
+occupation_totals <- adata_occ %>% 
+                            group_by(occupation_major) %>%
+                            summarise(n = n())
+knitr::kable(occupation_totals)
+
+```
+
+```{r, plot totals occupation, fig.height=6, fig.width=10}
+
+p <- ggplot(data = adata_occ %>% 
+                            group_by(occupation_major) %>%
+                            summarise(n = n())) +
+  geom_col(aes(x = occupation_major, y = n)) +
+  coord_flip()
+
+p
+```
+
+
+
+## 1.2 Entropy
+
+
+### 1.2.1 Entropy X AMR
+beta = 0.006 +- 0.0008316, super significant, 10% increase in population 0.06 % more information
+```{r Entropy x AMR plot, fig.height=6, fig.width=6}
 options(scipen = 0)
 
 amr_entro <- adata_occ %>% 
@@ -102,7 +137,7 @@ amr_entro <- adata_occ %>%
 
 
 beta <- lm(log(mean_entropy) ~ log(bevoelkerung), data = amr_entro)
-summary(beta)
+#summary(beta)
 print(paste("beta =", beta$coefficients[2]))
 
 pop_entropy <- ggplot(data = amr_entro, aes(x = bevoelkerung, y = mean_entropy)) +
@@ -123,17 +158,8 @@ pop_entropy
 
 ```
 
-```{r, Entropy x AMR beta}
 
-model1 <- lm(log(mean_entropy) ~ log(bevoelkerung), data = amr_entro)
-summary(model1)
-
-
-# beta = 0.006, super significant, 10% increase in population 0.06 % more information
-```
-
-
-```{r Entropy x population plot, echo = FALSE}
+```{r Entropy x population plot, fig.height=8, fig.width=8}
 library(scales)
 
 options(scipen = 0)
@@ -161,6 +187,24 @@ pop_entropy
 ```
 
 
+
+
+
+### 1.2.2 Density distribution
+```{r, density distribution, echo = FALSE}
+amrs <- c("Salzwedel", "Berlin", "Schwäbisch Hall")
+
+p <- ggplot(data = adata_occ %>%
+              dplyr::filter(AMR %in% amrs)) +
+  geom_density(aes(x = entropy, group = AMR, fill = AMR), alpha = 0.5) +
+  theme_minimal()
+  
+p
+
+```
+
+
+
 ## Other measures
 ```{r, Types x population, include=FALSE}
 pop_typ <- ggplot(data = adata_occ, aes(x = log(bevoelkerung, base = 10), y = types)) +
@@ -185,12 +229,11 @@ pop_noun
 
 # 2 Inter-industry
 
-## 2.1 Complexity X scaling
+## 2.1 SCALING X ENTROPY
 
 ```{r scaling/entropy, fig.height=8, fig.width=8, echo = FALSE}
 options(ggrepel.max.overlaps = Inf)
 #Using adata_occ
-
 
 # This function takes adata which was grouped by industry beforehand and returns scaling beta for each industry
 scaling <- function(industry_tibble){
@@ -225,20 +268,14 @@ entropy_industry <- ggplot(data = industry_data, aes(x = mean_entropy, y = beta)
 
 entropy_industry
 
-
-# taking out non-creative occupations
-
-
 ```
 
 
+## 2.2 Entropy differences
 
-
-## 2.2 Complexity differences
-
-### 2.2.1 Bootstrapping
 10.000 sampling iterations with replacement
-```{r bootstrapped CIs entropy differences, include=FALSE}
+
+```{#r bootstrap CIs entropy differences, include=FALSE}
 library(boot)
 
 boots_function <- function(data,index){
@@ -269,9 +306,8 @@ saveRDS(boots, file = "Data/entropy_industry bootstrap_ci_15.06.rds")
 
 ```
 
-### 2.2.2 Entropy diff Plot
 
-```{r combine boots and plot CIs, fig.height=7, fig.width=7, echo = FALSE}
+```{r, plot entropy differences, fig.height=6, fig.width=6, echo = FALSE}
 # wo sind die errorbars
 
 boots <- readRDS("Data/entropy_industry bootstrap_ci_15.06.rds")
@@ -299,9 +335,8 @@ be <- ggplot(data = boots_entropy) +
 be
 ```
 
-### Boxplot of entropy
 
-```{r, boxplot per industry, echo = FALSE, include = FALSE}
+```{r, boxplot architecture, echo = FALSE, include = FALSE}
 box_pl <- ggplot(data = adata_occ %>% dplyr::filter(industry %in% c("Agriculture, forestry, horticulture", "IT, computers, telecommunication")), aes(y = entropy)) +
   geom_boxplot() +
   facet_wrap(vars(industry))
@@ -311,9 +346,41 @@ box_pl
 
 ## 2.3 Scaling differences
 
-Two plots which show that industries differ
-### 2.3.1 IT vs. Food
-```{r, scaling differences, IT vs. Food}
+```{r, table industry beta models, echo = FALSE}
+#formulate model
+industry_model <- function(df) {
+  lm(log(n) ~ log(bevoelkerung), data = df)
+}
+
+#group and nest
+by_industry <- adata_occ %>% 
+  group_by(industry, AMR) %>%
+  summarise(n = n(), bevoelkerung = mean(bevoelkerung)) %>%
+  nest
+
+#add model
+by_industry <- by_industry %>%
+  mutate(model = map(data, industry_model))
+
+
+models_by_industry <- by_industry %>% 
+  mutate(tidy = map(model, broom::tidy)) %>% 
+  select(-data, -model) %>%
+  unnest(tidy) %>%
+  dplyr::filter(term == "log(bevoelkerung)") %>%
+  select(-term) %>%
+  arrange(estimate)
+
+options(scipen = 999)
+knitr::kable(models_by_industry) 
+
+#export
+#xtable::xtable(models_by_industry)
+```
+
+
+IT vs. Food
+```{r, scaling differences, IT vs. Food, fig.height=6, fig.width=6}
 industries <- c("IT, computers, telecommunication", "Food, luxury food production")
 
 food_it <- adata_occ %>% 
@@ -335,13 +402,14 @@ c <- ggplot(data = food_it, aes(x = population, y = n_ads, colour = industry)) +
   geom_smooth(method = "lm", aes(group = industry)) +
   ggpubr::stat_cor(method = "pearson", aes(group = industry)) +
   theme_minimal() +
+  theme(legend.position="bottom")+
   labs(x = "N", y = "Number of Job Ads") 
 c
 
 ```
 
-### 2.3.1 Raw materials processing, glass,\n ceramics, plastics, wood vs. Food
-```{r, scaling differences, IT vs. Food}
+Raw materials processing, glass, ceramics, plastics, wood vs. Food
+```{r, scaling differences, Raw materials processing vs. Media, fig.height=6, fig.width=6}
 industries <- c("Raw materials processing, glass,\n ceramics, plastics, wood", "Media, information services")
 
 food_it <- adata_occ %>% 
@@ -363,13 +431,14 @@ c <- ggplot(data = food_it, aes(x = population, y = n_ads, colour = industry)) +
   geom_smooth(method = "lm", aes(group = industry)) +
   ggpubr::stat_cor(method = "pearson", aes(group = industry)) +
   theme_minimal() +
+  theme(legend.position="bottom")+
   labs(x = "N", y = "Number of Job Ads") 
 c
 
 ```
 
 
-# 3 Intra-industry
+# 3 Micro: Intra-industry
 
 ```{r descriptives, include = FALSE}
 
@@ -378,10 +447,9 @@ adata_occ  %>% select(entropy, industry) %>% psych::describe.by(adata_occ$indust
 
 ```
 
-## 3.1 Beta estimates, models, regressions
-Does the beta coefficient increase with population size in the separate industry sectors?
+## 3.1 Micro scaling differences
+Does the beta coefficient (b=0 implies proportional scaling) of entropy increase with population size in the separate industry sectors?
 
-## 3.2 Models
 Raw material extraction has the highest beta: 0.004716474483
 A 1% increase in population is associated with a 0.04% increase in textual information density of job ads (elasticity).
 -> Negative relationships as well, e.g. IT, computers, telecommunication -> weird
@@ -410,18 +478,51 @@ models_by_industry <- by_industry %>%
   select(-term, -statistic) %>%
   arrange(estimate)
 
-models_by_industry
-xtable::xtable(models_by_industry, digits = c(0, 0, 4, 4, 2))
+knitr::kable(models_by_industry)
+#xtable::xtable(models_by_industry, digits = c(0, 0, 4, 4, 2))
 
 
 ```
 
 
-## 3.3 Facet industry amr
-```{r facet intra industry amr, fig.height=10, fig.width=10, echo = FALSE}
+## 3.2 Facet micro scaling 
+
+with creatives
+```{r facet intra industry amr all, fig.height=10, fig.width=10, echo = FALSE}
 
 adata_amr <- adata_occ %>% 
   #dplyr::filter(creative == 1) %>% #creatives??
+  group_by(AMR, industry) %>% 
+  summarise(n = n(), 
+            population = mean(bevoelkerung),
+            mean_entropy = mean(entropy, na.rm = T))
+
+e <- ggplot(data = adata_amr, aes(x = population, y = mean_entropy)) +
+ geom_point(alpha = 0.5, colour = "burlywood4") +
+  #log scale, base 10
+  scale_x_continuous(trans = log10_trans(),
+                     breaks = trans_breaks("log10", function(x) 10^x),
+                     labels = trans_format("log10", math_format(10^.x))) +
+  scale_y_continuous(trans = log10_trans(),
+                     breaks = trans_breaks("log10", function(x) 10^x),
+                     labels = trans_format("log10", math_format(10^.x))) +
+  ggpubr::stat_cor(method = "pearson", label.y.npc = 0.1) +
+  geom_smooth(method = "lm") +
+  facet_wrap(vars(industry)) +
+  geom_smooth(method = "lm", colour =  "darkred") +
+  labs(y = "Mean entropy", x = "N") +
+  theme_minimal()
+  
+e
+
+
+```
+
+without creatives
+```{r facet intra industry amr w/o non-creatives, fig.height=10, fig.width=10, echo = FALSE}
+
+adata_amr <- adata_occ %>% 
+  dplyr::filter(creative == 1) %>% #creatives only
   group_by(AMR, industry) %>% 
   summarise(n = n(), 
             population = mean(bevoelkerung),
@@ -473,14 +574,12 @@ e
 ```
 
 
-
 # 4 Occupations
 
-## 4.1.1 Complexity scaling
-```{r scaling/entropy, fig.height=8, fig.width=8, echo = FALSE}
+## 4.1 SCALING X ENTROPY
+
+```{r scaling x entropy, fig.height=6, fig.width=6, echo = FALSE}
 options(ggrepel.max.overlaps = Inf)
-
-
 
 
 # This function takes adata which was grouped by industry beforehand and returns scaling beta for each industry
@@ -495,6 +594,7 @@ scaling <- function(major_tibble){
 #group by industry, calculate summaries e.g. scaling
 
 adata_amr <- adata_occ %>% 
+  dplyr::filter(!(occupation_major == "Skilled Agricultural, Forestry and Fishery Workers")) %>%
   group_by(AMR, occupation_major) %>% 
   summarise(n = n(), 
             population = mean(bevoelkerung),
@@ -522,19 +622,11 @@ entropy_major
 
 ```
 
+# 4.2 Scaling differences
 
-```{r}
+## 4.2 Micro: Creative vs. non-creative scaling differences
 
-
-test <- adata_occ %>% dplyr::filter(occupation_major == "Skilled Agricultural, Forestry and Fishery Workers")
-```
-
-
-
-
-
-## 4.1.2 Creative vs. non-creative
-```{r  complex non complex, echo = FALSE}
+```{r plot complex non complex, echo = FALSE}
 creatives <- adata_occ %>% 
   group_by(AMR, creative) %>%
   summarise(n = n(),
@@ -562,35 +654,44 @@ c
 ```
 
 
-Scaling coefficients differ between occupation types (complex vs. non creative). Still, results don't support the hypothesis, that scaling is stronger for creative industries
-
+Both creative an non-creative scale overproportionally. Scaling coefficients differ between occupation types (complex vs. non creative).  
+Still, results don't support the hypothesis, that scaling is stronger for creative industries.
 ```{r complex occupations beta models, echo = FALSE}
-creatives <- adata_occ %>% 
-  dplyr::filter(creative == 1) %>% 
-  group_by(AMR) %>%
-  summarise(n = n(),
-            mean_entropy = mean(entropy, na.rm = T),
-            population = mean(bevoelkerung))
 
-non_creatives <- adata_occ %>% 
-  dplyr::filter(creative == 0) %>%
-  group_by(AMR) %>%
-  summarise(n = n(),
-            mean_entropy = mean(entropy, na.rm = T),
-            population = mean(bevoelkerung))
+creative_model <- function(df) {
+  lm(log(entropy) ~ log(bevoelkerung), data = df)
+}
+
+by_creative <- adata_occ %>% 
+  dplyr::filter(entropy > 0) %>% #drop cases where entropy is smaller than 1 -> undefefined if log(0)
+  group_by(creative) %>%
+  nest()
+
+by_creative <- by_creative %>%
+  mutate(model = map(data, creative_model))
+
+models_by_creative <- by_creative %>% 
+  mutate(tidy = map(model, broom::tidy)) %>% 
+  select(-data, -model) %>%
+  unnest(tidy) %>%
+  dplyr::filter(term == "log(bevoelkerung)") %>%
+  select(-term, -statistic) %>%
+  arrange(estimate)
+
+knitr::kable(models_by_creative)
+#xtable::xtable(models_by_industry, digits = c(0, 0, 4, 4, 2))
 
 
-model_c <- lm(log(mean_entropy) ~ log(population), data = creatives)
-print(paste("creatives beta = ", model_c$coefficients[2]))
 
 
-model_nc <- lm(log(mean_entropy) ~ log(population), data = non_creatives)
-print(paste("non-creatives beta = ", model_nc$coefficients[2]))
 
 ```
 
-## 4.3 Major groups
-knowledge complexity doesn't rise within major groups
+
+
+## 4.3 Micro: Major groups scaling differences
+
+Knowledge complexity doesn't increase within major groups. Well it does for some
 
 ```{r, facet isco major group X AMR, echo=FALSE}
 #hier die betas rein
@@ -622,8 +723,6 @@ o
 ```
 
 
-### Beta estimates, models, regressions
-
 Differences in beta largely correspond to isco major groups. Estimates are super small. 1% increase in knowledge complexity, 0.005% increase in y
 
 100% increase in population corresponds to 50% increase in information density -> Is this interpretation correct, yes it is I think.
@@ -651,16 +750,16 @@ models_by_occupation <- by_major %>%
   arrange(estimate)
 
 options(scipen = 999)
-models_by_occupation
+knitr::kable(models_by_occupation) 
+
+#export
 #xtable::xtable(models_by_industry)
-
-
 ```
 
 
 ## 4.3 Major differences bootstrap
 
-```{r major occupations CIs entropy differences, include=FALSE}
+```{#r major occupations CIs entropy differences, include=FALSE}
 library(boot)
 
 boots_function <- function(data,index){
@@ -692,7 +791,7 @@ saveRDS(boots, file = "Data/entropy_occupation_major_bootstrap_ci_13.06.rds")
 ```
 
 
-```{r major differences bootstrap CIs, fig.height=6, fig.width=10, echo = FALSE}
+```{r plot ajor differences bootstrap CIs, fig.height=6, fig.width=10, echo = FALSE}
 boots <- readRDS("Data/entropy_occupation_major_bootstrap_ci_13.06.rds")
 
 occupation_entropy_df <- adata_occ %>% 
@@ -724,7 +823,7 @@ be
 # 5 Maps
 
 ## 5.1 All Ads
-```{r, map of all jobads, echo = FALSE}
+```{r, map of all jobads, fig.height=6, fig.width=6, echo = FALSE}
 
 amr_n <- adata_occ %>% group_by(AMR) %>% summarise(n_anzeigen = n())
 
@@ -736,14 +835,16 @@ a <- ggplot(data = amr_sf) +
   coord_sf(datum = NA) +
   scale_fill_continuous(low = "white", high = "darkred") +
   labs(fill = "Number of Job Ads, log base 10") +
-  theme_minimal() 
+  theme(legend.position = "bottom") +
+  theme_minimal()
+  
 a
 
 ```
 
 
 ## 5.2 Knowledge complexity
-```{r, map of knowledge complexity x AMR, echo = FALSE}
+```{r, map of knowledge complexity x AMR, echo = FALSE, fig.height=6, fig.width=6}
 
 amr_entro <- adata_occ %>% 
   group_by(AMR, bevoelkerung) %>% 
@@ -757,7 +858,8 @@ a <- ggplot(data = amr_sf) +
   coord_sf(datum = NA) +
   scale_fill_continuous(low = "white", high = "darkred") +
   labs(fill = "Knowledge complexity") +
-  theme_minimal() 
+  theme_minimal() +
+  theme(legend.position = "bottom")
 a
 
 ```

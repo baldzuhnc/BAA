@@ -242,7 +242,6 @@ textual_complexity_measures <- function(cleantibble){
   dfm_corp <- dfm(tokens(corp, remove_punct = T, remove_symbols = T, remove_url = T))
   entropy <- textstat_entropy(dfm_corp, margin = "documents", base = 2)
   
-  
   ## Pos Ratio ####
   #parse 
   spacyParsed <- spacy_parse(corp, dependency = T)
