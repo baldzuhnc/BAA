@@ -239,7 +239,10 @@ textual_complexity_measures <- function(cleantibble){
   
   
   ## ENTROPY ####
-  dfm_corp <- dfm(tokens(corp, remove_punct = T, remove_symbols = T, remove_url = T))
+  dfm_corp <- tokens(corp, remove_punct = TRUE, remove_numbers = TRUE, remove_symbols = TRUE, remove_url = T) %>%
+    tokens_wordstem(language = "german") %>%
+    dfm()
+  
   entropy <- textstat_entropy(dfm_corp, margin = "documents", base = 2)
   
   ## Pos Ratio ####

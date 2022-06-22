@@ -16,8 +16,6 @@ library(scales)
 
 ```
 
-
-# Open files
 ```{r open data, include=FALSE}
 adata_each <- readRDS("Data/final_each2022-06-03 02:34:19.rds") %>% 
   #consider only job ads for exactly one position 
@@ -41,9 +39,7 @@ adata_amr <- readRDS("Data/final_amr_2022-05-25 10:41:28.rds")
 
 ```
 
-
 # Sandbox ################
-
 ```{r, include = FALSE}
 gummibaerchen <- adata_each %>% dplyr::filter(200 > str_length(Stellenbeschreibung)) %>% slice(371:371)
 gummibaerchen
@@ -275,7 +271,7 @@ entropy_industry
 
 10.000 sampling iterations with replacement
 
-```{#r bootstrap CIs entropy differences, include=FALSE}
+```{r bootstrap CIs entropy differences, include=FALSE, eval = FALSE}
 library(boot)
 
 boots_function <- function(data,index){
@@ -759,7 +755,7 @@ knitr::kable(models_by_occupation)
 
 ## 4.3 Major differences bootstrap
 
-```{#r major occupations CIs entropy differences, include=FALSE}
+```{r, major occupations CIs entropy differences, include=FALSE}
 library(boot)
 
 boots_function <- function(data,index){
@@ -791,7 +787,7 @@ saveRDS(boots, file = "Data/entropy_occupation_major_bootstrap_ci_13.06.rds")
 ```
 
 
-```{r plot ajor differences bootstrap CIs, fig.height=6, fig.width=10, echo = FALSE}
+```{r plot major differences bootstrap CIs, fig.height=6, fig.width=10, echo = FALSE, eval=FALSE}
 boots <- readRDS("Data/entropy_occupation_major_bootstrap_ci_13.06.rds")
 
 occupation_entropy_df <- adata_occ %>% 
@@ -835,8 +831,8 @@ a <- ggplot(data = amr_sf) +
   coord_sf(datum = NA) +
   scale_fill_continuous(low = "white", high = "darkred") +
   labs(fill = "Number of Job Ads, log base 10") +
-  theme(legend.position = "bottom") +
-  theme_minimal()
+  theme_minimal() +
+  theme(legend.position = "bottom")
   
 a
 
