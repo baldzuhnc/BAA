@@ -7,6 +7,7 @@ output:
 
 ```{r setup/libraries, include=FALSE}
 #setup
+options(scipen = 0)
 knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE) #echo enables
 source(file = "2a Functions.R") #import functions
 
@@ -31,7 +32,7 @@ adata_occ <- readRDS("Data/final_occupations_2022-06-11 22:45:53.rds") %>%
   # exclude these 2631 cases as well
   dplyr::filter(!(ID == lead(ID) | lag(ID) == ID)) %>%
   # exclude armed forces (4 cases only)
-  dplyr::filter(!(occupation_major == "Armed Forces Occupations")) %>%
+  dplyr::filter(!(occupation_major == "0 Armed Forces Occupations")) %>%
   en_ingles()
 
 
@@ -40,9 +41,16 @@ adata_amr <- readRDS("Data/final_amr_2022-05-25 10:41:28.rds")
 ```
 
 # Sandbox ################
-```{r, include = FALSE}
-gummibaerchen <- adata_each %>% dplyr::filter(200 > str_length(Stellenbeschreibung)) %>% slice(371:371)
-gummibaerchen
+```{r, job ad example, include = FALSE}
+gummibaerchen <- adata_each %>% 
+  dplyr::filter(200 > str_length(Stellenbeschreibung)) %>% slice(371:371) %>% 
+  select(Titel, Veroeffentlicht, industry, Arbeitgeber, Lat, Lon, Stellenbeschreibung, Befristung, Staerken, Sprachkentnisse)
+
+colnames <- colnames(gummibaerchen)
+gb <- tibble(Fields = colnames, Values = t(gummibaerchen))
+
+#xtable::xtable(gb)
+
 ```
 
 ```{r, include = FALSE}
@@ -56,7 +64,7 @@ t$Stellenbeschreibung
 # Sandbox ################
 
 
-# 1 Macro
+# 1 Sample
 
 ## 1.1 Descriptives
 
@@ -148,7 +156,7 @@ pop_entropy <- ggplot(data = amr_entro, aes(x = bevoelkerung, y = mean_entropy))
   geom_smooth(method = "lm", colour =  "darkred") +
   ggpubr::stat_cor(method = "pearson") +
   theme_minimal() +
-  labs(x = "N", y = "Entropy")
+  labs(x = "N", y = "Job complexity (Mean Entropy)")
 pop_entropy
 
 
@@ -181,8 +189,6 @@ pop_entropy <- ggplot(data = adata_occ %>% dplyr::filter(entropy > 0),
 pop_entropy
 
 ```
-
-
 
 
 
@@ -223,7 +229,7 @@ pop_noun
 
 
 
-# 2 Inter-industry
+# 2 Inter-Industry
 
 ## 2.1 SCALING X ENTROPY
 
@@ -259,7 +265,7 @@ entropy_industry <- ggplot(data = industry_data, aes(x = mean_entropy, y = beta)
   geom_smooth(method = "lm", colour = "darkred") +
   ggrepel::geom_text_repel(aes(label = industry), ) +
   geom_hline(yintercept = 1, size = 0.2, linetype = "dotted") +
-  labs(x = "Mean Entropy", y = "Scaling coefficient (beta)") +
+  labs(x = "Job complexity (Mean Entropy)", y = "Scaling coefficient (beta)") +
   theme_minimal()
 
 entropy_industry
@@ -303,9 +309,7 @@ saveRDS(boots, file = "Data/entropy_industry bootstrap_ci_15.06.rds")
 ```
 
 
-```{r, plot entropy differences, fig.height=6, fig.width=6, echo = FALSE}
-# wo sind die errorbars
-
+```{r, plot entropy differences, fig.height=6, fig.width=8, echo = FALSE}
 boots <- readRDS("Data/entropy_industry bootstrap_ci_15.06.rds")
 
 industry_entropy_df <- adata_occ %>% 
@@ -325,7 +329,7 @@ be <- ggplot(data = boots_entropy) +
   #color
   coord_flip() +
   labs(x =  "Industry", 
-       y = "Mean entropy") + 
+       y = "Job complexity (Mean entropy)") + 
   theme(legend.position = "none")
     
 be
@@ -377,6 +381,7 @@ knitr::kable(models_by_industry)
 
 IT vs. Food
 ```{r, scaling differences, IT vs. Food, fig.height=6, fig.width=6}
+options(scipen = 0)
 industries <- c("IT, computers, telecommunication", "Food, luxury food production")
 
 food_it <- adata_occ %>% 
@@ -434,7 +439,7 @@ c
 ```
 
 
-# 3 Micro: Intra-industry
+# 3 Micro: Intra-Industry
 
 ```{r descriptives, include = FALSE}
 
@@ -483,7 +488,7 @@ knitr::kable(models_by_industry)
 
 ## 3.2 Facet micro scaling 
 
-with creatives
+*with creatives*
 ```{r facet intra industry amr all, fig.height=10, fig.width=10, echo = FALSE}
 
 adata_amr <- adata_occ %>% 
@@ -514,7 +519,7 @@ e
 
 ```
 
-without creatives
+*without creatives*
 ```{r facet intra industry amr w/o non-creatives, fig.height=10, fig.width=10, echo = FALSE}
 
 adata_amr <- adata_occ %>% 
@@ -570,11 +575,11 @@ e
 ```
 
 
-# 4 Occupations
+# 4 Inter-Occupations
 
 ## 4.1 SCALING X ENTROPY
 
-```{r scaling x entropy, fig.height=6, fig.width=6, echo = FALSE}
+```{r scaling x entropy, fig.height=8, fig.width=8, echo = FALSE}
 options(ggrepel.max.overlaps = Inf)
 
 
@@ -618,9 +623,106 @@ entropy_major
 
 ```
 
-# 4.2 Scaling differences
 
-## 4.2 Micro: Creative vs. non-creative scaling differences
+## 4.2 Entropy differences
+
+```{r, major occupations CIs entropy differences, eval = FALSE, include=FALSE}
+library(boot)
+
+boots_function <- function(data,index){
+  d <- data[index,]
+  return(mean(d$entropy, na.rm = T))  
+}
+
+boots <- adata_occ %>%
+  group_split(occupation_major) %>% 
+  
+  map_dfr(function(x){
+    mean_entropy <- mean(x$entropy, na.rm = T)
+    
+    basic <- boot.ci(boot(x, boots_function, R = 1000), type = "basic")$basic
+    CI.LL <- basic[4]
+    CI.UL <- basic[5]
+    
+    res <- tibble(mean_entropy = round(mean_entropy, digits = 4),
+                  CI.LL = round(CI.LL, digits = 4),
+                  CI.UL = round(CI.UL, digits = 4))
+    
+    return(res)
+    
+    })
+boots
+
+saveRDS(boots, file = "Data/entropy_occupation_major_bootstrap_ci_13.06.rds")
+
+```
+
+
+```{r plot major differences bootstrap CIs, fig.height=6, fig.width=6, echo = FALSE}
+boots <- readRDS("Data/entropy_occupation_major_bootstrap_ci_13.06.rds")
+
+occupation_entropy_df <- adata_occ %>% 
+  group_by(occupation_major) %>% 
+  summarise(mean_entropy = round(mean(entropy, na.rm = T), digits = 4))
+
+boots_entropy <- merge(occupation_entropy_df, boots)
+
+be <- ggplot(data = boots_entropy) +
+  geom_col(aes(x = reorder(occupation_major, mean_entropy), 
+               y = mean_entropy), fill = "orange1") +
+  scale_y_continuous(limits=c(6, 7.5),oob = rescale_none) +
+
+  #errorbar 
+  geom_errorbar(aes(x = occupation_major, ymin = CI.LL, ymax = CI.UL),
+                  position = "dodge", 
+                  width = .5) +
+  #color
+  coord_flip() +
+  labs(x =  "Occupation", 
+       y = "Job complexity (Mean entropy)") + 
+  theme(legend.position = "none")
+    
+be
+```
+
+
+## 4.3 Scaling differences
+
+Professionals vs. Elementary Occupations
+```{r, scaling differences, professionals vs. elementary, fig.height=6, fig.width=6}
+options(scipen= 0)
+occupations <- c("Professionals", "Elementary Occupations")
+
+prof_elem <- adata_occ %>% 
+  dplyr::filter(occupation_major %in% occupations) %>%
+  group_by(AMR, occupation_major) %>%
+  summarise(n_ads = n(),
+            population = mean(bevoelkerung))
+
+c <- ggplot(data = prof_elem, aes(x = population, y = n_ads, colour = occupation_major)) +
+  geom_point(alpha = 0.8) +
+  #log scale, base 10
+  scale_color_manual(values = c("Elementary Occupations" = "orange1", "Professionals" = "darkred")) +
+  scale_x_continuous(trans = log10_trans(),
+                     breaks = trans_breaks("log10", function(x) 10^x),
+                     labels = trans_format("log10", math_format(10^.x))) +
+  scale_y_continuous(trans = log10_trans(),
+                     breaks = trans_breaks("log10", function(x) 10^x),
+                     labels = trans_format("log10", math_format(10^.x))) +
+  geom_smooth(method = "lm", aes(group = occupation_major)) +
+  ggpubr::stat_cor(method = "pearson", aes(group = occupation_major)) +
+  theme_minimal() +
+  theme(legend.position="bottom")+
+  labs(x = "N", y = "Number of Job Ads") 
+c
+
+```
+
+
+
+# 5 Micro: Intra-Occupation
+
+## 5.1 Creative vs. non-creative scaling differences
 
 ```{r plot complex non complex, echo = FALSE}
 creatives <- adata_occ %>% 
@@ -650,7 +752,7 @@ c
 ```
 
 
-Both creative an non-creative scale overproportionally. Scaling coefficients differ between occupation types (complex vs. non creative).  
+Both creative an non-creative scale over proportionally. Scaling coefficients differ between occupation types (complex vs. non creative).  
 Still, results don't support the hypothesis, that scaling is stronger for creative industries.
 ```{r complex occupations beta models, echo = FALSE}
 
@@ -675,7 +777,7 @@ models_by_creative <- by_creative %>%
   arrange(estimate)
 
 knitr::kable(models_by_creative)
-#xtable::xtable(models_by_industry, digits = c(0, 0, 4, 4, 2))
+#xtable::xtable(models_by_creative, digits = c(0, 0, 4, 4, 2))
 
 
 
@@ -685,7 +787,42 @@ knitr::kable(models_by_creative)
 
 
 
-## 4.3 Micro: Major groups scaling differences
+## 5.2 Micro scaling differences major groups
+
+Differences in beta largely correspond to ISCO major groups. Estimates are super small. 1% increase in knowledge complexity, 0.005% increase in y
+
+100% increase in population corresponds to 50% increase in information density -> Is this interpretation correct, yes it is I think.
+Doubling city size corresponds to 50% increase in knowledge complexity for clerical support workers.
+
+```{r, major group models/betas, echo = FALSE}
+occupation_model <- function(df) {
+  lm(log(entropy) ~ log(bevoelkerung), data = df)
+}
+
+by_major <- adata_occ %>% 
+  dplyr::filter(entropy > 0) %>% #drop cases where entropy is smaller than 1 -> undefefined if log(0)
+  group_by(occupation_major) %>%
+  nest()
+
+by_major <- by_major %>%
+  mutate(model = map(data, occupation_model))
+
+models_by_occupation <- by_major %>% 
+  mutate(tidy = map(model, broom::tidy)) %>% 
+  select(-data, -model) %>%
+  unnest(tidy) %>%
+  dplyr::filter(term == "log(bevoelkerung)") %>%
+  select(-term, -statistic) %>%
+  arrange(estimate)
+
+options(scipen = 999)
+knitr::kable(models_by_occupation) 
+
+#export
+#xtable::xtable(models_by_occupation, digits = c(0, 0, 4, 4, 2))
+```
+
+## 5.3 Facet micro scaling
 
 Knowledge complexity doesn't increase within major groups. Well it does for some
 
@@ -719,106 +856,9 @@ o
 ```
 
 
-Differences in beta largely correspond to isco major groups. Estimates are super small. 1% increase in knowledge complexity, 0.005% increase in y
+# 6 Maps
 
-100% increase in population corresponds to 50% increase in information density -> Is this interpretation correct, yes it is I think.
-Doubling city size corresponds to 50% increase in knowledge complexity for clerical support workers.
-
-```{r, major group models/betas, echo = FALSE}
-occupation_model <- function(df) {
-  lm(log(entropy) ~ log(bevoelkerung), data = df)
-}
-
-by_major <- adata_occ %>% 
-  dplyr::filter(entropy > 0) %>% #drop cases where entropy is smaller than 1 -> undefefined if log(0)
-  group_by(occupation_major) %>%
-  nest()
-
-by_major <- by_major %>%
-  mutate(model = map(data, occupation_model))
-
-models_by_occupation <- by_major %>% 
-  mutate(tidy = map(model, broom::tidy)) %>% 
-  select(-data, -model) %>%
-  unnest(tidy) %>%
-  dplyr::filter(term == "log(bevoelkerung)") %>%
-  select(-term) %>%
-  arrange(estimate)
-
-options(scipen = 999)
-knitr::kable(models_by_occupation) 
-
-#export
-#xtable::xtable(models_by_industry)
-```
-
-
-## 4.3 Major differences bootstrap
-
-```{r, major occupations CIs entropy differences, include=FALSE}
-library(boot)
-
-boots_function <- function(data,index){
-  d <- data[index,]
-  return(mean(d$entropy, na.rm = T))  
-}
-
-boots <- adata_occ %>%
-  group_split(occupation_major) %>% 
-  
-  map_dfr(function(x){
-    mean_entropy <- mean(x$entropy, na.rm = T)
-    
-    basic <- boot.ci(boot(x, boots_function, R = 1000), type = "basic")$basic
-    CI.LL <- basic[4]
-    CI.UL <- basic[5]
-    
-    res <- tibble(mean_entropy = round(mean_entropy, digits = 4),
-                  CI.LL = round(CI.LL, digits = 4),
-                  CI.UL = round(CI.UL, digits = 4))
-    
-    return(res)
-    
-    })
-boots
-
-saveRDS(boots, file = "Data/entropy_occupation_major_bootstrap_ci_13.06.rds")
-
-```
-
-
-```{r plot major differences bootstrap CIs, fig.height=6, fig.width=10, echo = FALSE, eval=FALSE}
-boots <- readRDS("Data/entropy_occupation_major_bootstrap_ci_13.06.rds")
-
-occupation_entropy_df <- adata_occ %>% 
-  group_by(occupation_major) %>% 
-  summarise(mean_entropy = round(mean(entropy, na.rm = T), digits = 4))
-
-boots_entropy <- merge(occupation_entropy_df, boots)
-
-be <- ggplot(data = boots_entropy) +
-  geom_col(aes(x = reorder(occupation_major, mean_entropy), 
-               y = mean_entropy), fill = "orange1") +
-  scale_y_continuous(limits=c(6, 7.5),oob = rescale_none) +
-
-  #errorbar 
-  geom_errorbar(aes(x = occupation_major, ymin = CI.LL, ymax = CI.UL),
-                  position = "dodge", 
-                  width = .5) +
-  #color
-  coord_flip() +
-  labs(x =  "Occupation Major Group", 
-       y = "Mean entropy") + 
-  theme(legend.position = "none")
-    
-be
-```
-
-
-
-# 5 Maps
-
-## 5.1 All Ads
+## 6.1 All Ads
 ```{r, map of all jobads, fig.height=6, fig.width=6, echo = FALSE}
 
 amr_n <- adata_occ %>% group_by(AMR) %>% summarise(n_anzeigen = n())
@@ -839,7 +879,7 @@ a
 ```
 
 
-## 5.2 Knowledge complexity
+## 6.2 Job complexity
 ```{r, map of knowledge complexity x AMR, echo = FALSE, fig.height=6, fig.width=6}
 
 amr_entro <- adata_occ %>% 
@@ -853,7 +893,7 @@ a <- ggplot(data = amr_sf) +
   geom_sf(aes(fill=mean_entropy)) +
   coord_sf(datum = NA) +
   scale_fill_continuous(low = "white", high = "darkred") +
-  labs(fill = "Knowledge complexity") +
+  labs(fill = "Job complexity") +
   theme_minimal() +
   theme(legend.position = "bottom")
 a
