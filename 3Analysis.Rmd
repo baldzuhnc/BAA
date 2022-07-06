@@ -1,8 +1,9 @@
 ---
 title: "Analysis"
 output:
-  html_document: default
   pdf_document: default
+  html_document: 
+    code_folding: hide
 ---
 
 ```{r setup/libraries, include=FALSE}
@@ -32,7 +33,7 @@ adata_occ <- readRDS("Data/final_occupations_2022-06-11 22:45:53.rds") %>%
   # exclude these 2631 cases as well
   dplyr::filter(!(ID == lead(ID) | lag(ID) == ID)) %>%
   # exclude armed forces (4 cases only)
-  dplyr::filter(!(occupation_major == "0 Armed Forces Occupations")) %>%
+  dplyr::filter(!(occupation_major == "Armed Forces Occupations")) %>%
   en_ingles()
 
 
@@ -41,6 +42,7 @@ adata_amr <- readRDS("Data/final_amr_2022-05-25 10:41:28.rds")
 ```
 
 # Sandbox ################
+
 ```{r, job ad example, include = FALSE}
 gummibaerchen <- adata_each %>% 
   dplyr::filter(200 > str_length(Stellenbeschreibung)) %>% slice(371:371) %>% 
@@ -61,6 +63,21 @@ t$Stellenbeschreibung
 ```
 
 
+```{r}
+#filter amrs
+
+adata_occ %>% 
+  group_by(AMR) %>% 
+  summarise(n = n(), pop = mean(bevoelkerung)) %>% 
+  ggplot(data = .) + 
+  geom_point(aes(x = pop, y = n)) +
+  geom_smooth(method = "lm", aes(x = pop, y = n)) +
+  geom_smooth(method = "glm", aes(x = pop, y = n), )
+
+
+```
+
+
 # Sandbox ################
 
 
@@ -69,13 +86,12 @@ t$Stellenbeschreibung
 ## 1.1 Descriptives
 
 #### 1.1.1 Frequencies x population x industry
-```{r, frequencies per industry, echo = FALSE, fig.height=6, fig.width=10}
+```{r, frequencies per industry, fig.height=6, fig.width=10}
 #histogram of frequencies, log(population) -> scaling observable for some industries
 
-p <- ggplot(data = adata_occ, aes(x = log(bevoelkerung, base = 10))) +
+ggplot(data = adata_occ, aes(x = log(bevoelkerung, base = 10))) +
   geom_histogram(bins = 50) +
   facet_wrap(vars(industry))
-p
 
 ```
 
@@ -463,7 +479,7 @@ industry_model <- function(df) {
 }
 
 by_industry <- adata_occ %>% 
-  #dplyr::filter(creative == 1) %>% #creatives??
+  dplyr::filter(creative == 1) %>% #creatives??
   dplyr::filter(entropy > 0) %>% #drop cases where entropy is smaller than 1 -> undefefined if log(0)
   group_by(industry) %>%
   nest()
@@ -480,7 +496,7 @@ models_by_industry <- by_industry %>%
   arrange(estimate)
 
 knitr::kable(models_by_industry)
-#xtable::xtable(models_by_industry, digits = c(0, 0, 4, 4, 2))
+xtable::xtable(models_by_industry, digits = c(0, 0, 4, 4, 2))
 
 
 ```
@@ -511,7 +527,7 @@ e <- ggplot(data = adata_amr, aes(x = population, y = mean_entropy)) +
   geom_smooth(method = "lm") +
   facet_wrap(vars(industry)) +
   geom_smooth(method = "lm", colour =  "darkred") +
-  labs(y = "Mean entropy", x = "N") +
+  labs(y = "Job complexity (Mean entropy)", x = "N") +
   theme_minimal()
   
 e
@@ -542,7 +558,7 @@ e <- ggplot(data = adata_amr, aes(x = population, y = mean_entropy)) +
   geom_smooth(method = "lm") +
   facet_wrap(vars(industry)) +
   geom_smooth(method = "lm", colour =  "darkred") +
-  labs(y = "Mean entropy", x = "N") +
+  labs(y = "Job complexity (Mean entropy)", x = "N") +
   theme_minimal()
   
 e
@@ -612,7 +628,7 @@ entropy_major <- ggplot(data = major_data, aes(x = mean_entropy, y = beta)) +
   geom_smooth(method = "lm", colour = "darkred") +
   ggrepel::geom_text_repel(aes(label = occupation_major), ) +
   geom_hline(yintercept = 1, size = 0.2, linetype = "dotted") +
-  labs(x = "Mean Entropy", y = "Scaling coefficient (beta)") +
+  labs(x = "Job complexity (Mean Entropy)", y = "Scaling coefficient (beta)") +
   theme_minimal()
 
 entropy_major
@@ -688,10 +704,44 @@ be
 
 ## 4.3 Scaling differences
 
-Professionals vs. Elementary Occupations
+```{r, table major beta models, echo = FALSE}
+#formulate model
+occupation_model <- function(df) {
+  lm(log(n) ~ log(bevoelkerung), data = df)
+}
+
+#group and nest
+by_occupation <- adata_occ %>% 
+  group_by(occupation_major, AMR) %>%
+  summarise(n = n(), bevoelkerung = mean(bevoelkerung)) %>%
+  nest
+
+#add model
+by_occupation <- by_occupation %>%
+  mutate(model = map(data, occupation_model))
+
+
+n_models_by_occ <- by_occupation %>% 
+  mutate(tidy = map(model, broom::tidy)) %>% 
+  select(-data, -model) %>%
+  unnest(tidy) %>%
+  dplyr::filter(term == "log(bevoelkerung)") %>%
+  select(-term) %>%
+  arrange(estimate)
+
+options(scipen = 999)
+knitr::kable(n_models_by_occ) 
+
+#export
+#xtable::xtable(models_by_industry)
+```
+
+
+
+Professionals vs. Skilled Agricultural, Forestry and Fishery Workers
 ```{r, scaling differences, professionals vs. elementary, fig.height=6, fig.width=6}
 options(scipen= 0)
-occupations <- c("Professionals", "Elementary Occupations")
+occupations <- c("Professionals", "Skilled Agricultural, Forestry and Fishery Workers")
 
 prof_elem <- adata_occ %>% 
   dplyr::filter(occupation_major %in% occupations) %>%
@@ -702,7 +752,7 @@ prof_elem <- adata_occ %>%
 c <- ggplot(data = prof_elem, aes(x = population, y = n_ads, colour = occupation_major)) +
   geom_point(alpha = 0.8) +
   #log scale, base 10
-  scale_color_manual(values = c("Elementary Occupations" = "orange1", "Professionals" = "darkred")) +
+  scale_color_manual(values = c("Skilled Agricultural, Forestry and Fishery Workers" = "orange1", "Professionals" = "darkred")) +
   scale_x_continuous(trans = log10_trans(),
                      breaks = trans_breaks("log10", function(x) 10^x),
                      labels = trans_format("log10", math_format(10^.x))) +
@@ -747,7 +797,7 @@ c <- ggplot(data = creatives, aes(x = population, y = mean_entropy, colour = cre
   geom_smooth(method = "lm", aes(group = creative)) +
   ggpubr::stat_cor(method = "pearson", aes(group = creative)) +
   theme_minimal() +
-  labs(x = "N", y = "Entropy", title = "Complex occupations") 
+  labs(x = "N", y = "Job complexity (Mean entropy)", title = "Complex occupations") 
 c
 ```
 
@@ -801,6 +851,7 @@ occupation_model <- function(df) {
 
 by_major <- adata_occ %>% 
   dplyr::filter(entropy > 0) %>% #drop cases where entropy is smaller than 1 -> undefefined if log(0)
+  #dplyr::filter(creative == 1) %>%
   group_by(occupation_major) %>%
   nest()
 
@@ -859,7 +910,7 @@ o
 # 6 Maps
 
 ## 6.1 All Ads
-```{r, map of all jobads, fig.height=6, fig.width=6, echo = FALSE}
+```{r, map of all jobads, fig.height=6, fig.width=6}
 
 amr_n <- adata_occ %>% group_by(AMR) %>% summarise(n_anzeigen = n())
 

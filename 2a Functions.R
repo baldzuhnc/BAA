@@ -57,7 +57,7 @@ clean <- function(rawdata){
 
 ############## Industry classification ##############
 
-classify_industry <- function(cleantibble){
+classify_Industry <- function(cleantibble){
   
   baa_key <- readxl::read_excel("Data/ISCO/Alphabetisches-Verzeichnis-Berufsbenennungen.xlsx", sheet = 2) %>%
     slice(5:18723) %>%
@@ -84,7 +84,7 @@ classify_industry <- function(cleantibble){
   
   cleantibble_key_isco <- left_join(cleantibble_key, isco_baa, by = "baa_key") %>%
     mutate(creative = map_int(isco_key, ~any(str_starts(., creative_industries,))),
-           occupation_major = case_when(str_starts(isco_key, "1") ~ "1 Managers",
+           Occupation_Major = case_when(str_starts(isco_key, "1") ~ "1 Managers",
                                         str_starts(isco_key, "2") ~ "2 Professionals",
                                         str_starts(isco_key, "3") ~ "3 Technicians and Associate Professionals",
                                         str_starts(isco_key, "4") ~ "4 Clerical Support Workers",
@@ -282,35 +282,35 @@ textual_complexity_measures <- function(cleantibble){
 en_ingles <- function(adata){
   
   #variables
-  adata <- adata %>% rename(industry = "Branche")
+  adata <- adata %>% rename(Industry = "Branche")
   
   #industries
-  adata$industry[adata$industry == "Abfallwirtschaft, Energieversorgung, Wasserversorgung"] <- "Waste management, energy supply,\n water supply"
-  adata$industry[adata$industry == "Banken, Finanzdienstleistungen, Immobilien, Versicherungen"] <- "Banks, financial services,\n real estate, insurance"
-  adata$industry[adata$industry == "Bau, Architektur"] <- "Construction, architecture"
-  adata$industry[adata$industry == "Bildung, Erziehung, Unterricht"] <- "Education, upbringing, teaching"
-  adata$industry[adata$industry == "Chemie, Pharma, Biotechnologie"] <- "Chemistry, pharmaceuticals,\n biotechnology"
-  adata$industry[adata$industry == "Einzelhandel, Großhandel, Außenhandel"] <- "Retail, wholesale, foreign Trade"
-  adata$industry[adata$industry == "Elektro, Feinmechanik, Optik, Medizintechnik"] <- "Electrical, precision mechanics,\n optics, medical technology"
-  adata$industry[adata$industry == "Fahrzeugbau, Fahrzeuginstandhaltung"] <- "Vehicle construction,\n vehicle maintenance"
-  adata$industry[adata$industry == "Gesundheit, Soziales"] <- "Health, social sector"
-  adata$industry[adata$industry == "Hotel, Gaststätten, Tourismus, Kunst, Kultur, Freizeit"] <- "Hotel, restaurants, tourism,\n art, culture, leisure"
-  adata$industry[adata$industry == "IT, Computer, Telekommunikation"] <- "IT, computers, telecommunication"
-  adata$industry[adata$industry == "Konsum- und Gebrauchsgüter"] <- "Consumer goods and durables"
-  adata$industry[adata$industry == "Landwirtschaft, Forstwirtschaft, Gartenbau"] <- "Agriculture, forestry, horticulture"
-  adata$industry[adata$industry == "Logistik, Transport, Verkehr "] <- "Logistics, transport, traffic"
-  adata$industry[adata$industry == "Luftfahrttechnik, Raumfahrttechnik"] <- "Aeronautical engineering,\n space technology"
-  adata$industry[adata$industry == "Management, Beratung, Recht, Steuern"] <- "Management, consulting, law, taxes"
-  adata$industry[adata$industry == "Medien, Informationsdienste"] <- "Media, information services"
-  adata$industry[adata$industry == "Metall, Maschinenbau, Anlagenbau"] <- "Metal, mechanical engineering,\n plant engineering"
-  adata$industry[adata$industry == "Nahrungs- / Genussmittelherstellung"] <- "Food, luxury food production"
-  adata$industry[adata$industry == "Öffentlicher Dienst, Organisationen"] <- "Public service, organisations"
-  adata$industry[adata$industry == "Papier, Druck, Verpackung"] <- "Paper, printing, packaging"
-  adata$industry[adata$industry == "Rohstoffgewinnung, Rohstoffaufbereitung"] <- "Raw material extraction,\n raw material processing"
-  adata$industry[adata$industry == "Rohstoffverarbeitung, Glas, Keramik, Kunststoff, Holz"] <- "Raw materials processing, glass,\n ceramics, plastics, wood"
-  adata$industry[adata$industry == "Sicherheits-, Reinigungs-, Reparatur- und weitere Dienstleistungen"] <- "Security, cleaning,\n repair and other services"
-  adata$industry[adata$industry == "Werbung, Öffentlichkeitsarbeit"] <- "Advertising, public relations"
-  adata$industry[adata$industry == "Wissenschaft, Forschung, Entwicklung"] <- "Science, research,\n development"
+  adata$Industry[adata$Industry == "Abfallwirtschaft, Energieversorgung, Wasserversorgung"] <- "Waste management, energy supply,\n water supply"
+  adata$Industry[adata$Industry == "Banken, Finanzdienstleistungen, Immobilien, Versicherungen"] <- "Banks, financial services,\n real estate, insurance"
+  adata$Industry[adata$Industry == "Bau, Architektur"] <- "Construction, architecture"
+  adata$Industry[adata$Industry == "Bildung, Erziehung, Unterricht"] <- "Education, upbringing, teaching"
+  adata$Industry[adata$Industry == "Chemie, Pharma, Biotechnologie"] <- "Chemistry, pharmaceuticals,\n biotechnology"
+  adata$Industry[adata$Industry == "Einzelhandel, Großhandel, Außenhandel"] <- "Retail, wholesale, foreign Trade"
+  adata$Industry[adata$Industry == "Elektro, Feinmechanik, Optik, Medizintechnik"] <- "Electrical, precision mechanics,\n optics, medical technology"
+  adata$Industry[adata$Industry == "Fahrzeugbau, Fahrzeuginstandhaltung"] <- "Vehicle construction,\n vehicle maintenance"
+  adata$Industry[adata$Industry == "Gesundheit, Soziales"] <- "Health, social sector"
+  adata$Industry[adata$Industry == "Hotel, Gaststätten, Tourismus, Kunst, Kultur, Freizeit"] <- "Hotel, restaurants, tourism,\n art, culture, leisure"
+  adata$Industry[adata$Industry == "IT, Computer, Telekommunikation"] <- "IT, computers, telecommunication"
+  adata$Industry[adata$Industry == "Konsum- und Gebrauchsgüter"] <- "Consumer goods and durables"
+  adata$Industry[adata$Industry == "Landwirtschaft, Forstwirtschaft, Gartenbau"] <- "Agriculture, forestry, horticulture"
+  adata$Industry[adata$Industry == "Logistik, Transport, Verkehr "] <- "Logistics, transport, traffic"
+  adata$Industry[adata$Industry == "Luftfahrttechnik, Raumfahrttechnik"] <- "Aeronautical engineering,\n space technology"
+  adata$Industry[adata$Industry == "Management, Beratung, Recht, Steuern"] <- "Management, consulting, law, taxes"
+  adata$Industry[adata$Industry == "Medien, Informationsdienste"] <- "Media, information services"
+  adata$Industry[adata$Industry == "Metall, Maschinenbau, Anlagenbau"] <- "Metal, mechanical engineering,\n plant engineering"
+  adata$Industry[adata$Industry == "Nahrungs- / Genussmittelherstellung"] <- "Food, luxury food production"
+  adata$Industry[adata$Industry == "Öffentlicher Dienst, Organisationen"] <- "Public service, organisations"
+  adata$Industry[adata$Industry == "Papier, Druck, Verpackung"] <- "Paper, printing, packaging"
+  adata$Industry[adata$Industry == "Rohstoffgewinnung, Rohstoffaufbereitung"] <- "Raw material extraction,\n raw material processing"
+  adata$Industry[adata$Industry == "Rohstoffverarbeitung, Glas, Keramik, Kunststoff, Holz"] <- "Raw materials processing, glass,\n ceramics, plastics, wood"
+  adata$Industry[adata$Industry == "Sicherheits-, Reinigungs-, Reparatur- und weitere Dienstleistungen"] <- "Security, cleaning,\n repair and other services"
+  adata$Industry[adata$Industry == "Werbung, Öffentlichkeitsarbeit"] <- "Advertising, public relations"
+  adata$Industry[adata$Industry == "Wissenschaft, Forschung, Entwicklung"] <- "Science, research,\n development"
   
   return(adata)
 }
